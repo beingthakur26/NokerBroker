@@ -7,6 +7,7 @@ import { apiPost } from "../../../lib/api-client";
 
 type Role = "BUYER" | "SELLER" | "BUILDER";
 type Step = "phone" | "otp";
+type VerifyOtpResponse = { user: { role: Role } };
 
 export default function SignupPage() {
   const router = useRouter();
@@ -34,8 +35,12 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
-      await apiPost("/auth/verify-otp", { phone, code, role });
-      router.push("/"); // dashboards come in a later step — home for now
+      const { user } = await apiPost<VerifyOtpResponse>("/auth/verify-signup-otp", { phone, code, role });
+      if (user.role === "SELLER" || user.role === "BUILDER") {
+        router.replace("/post-property");
+        return;
+      }
+      router.replace("/profile");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
     } finally {

@@ -5,10 +5,16 @@ interface TokenPayload {
   role: string;
 }
 
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET is not set");
+  return secret;
+}
+
 export function signToken(payload: TokenPayload) {
-  return jwt.sign(payload, process.env.JWT_SECRET as string, { expiresIn: "7d" });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): TokenPayload {
-  return jwt.verify(token, process.env.JWT_SECRET as string) as TokenPayload;
+  return jwt.verify(token, getJwtSecret()) as TokenPayload;
 }

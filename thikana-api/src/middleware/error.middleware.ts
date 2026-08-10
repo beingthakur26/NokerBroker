@@ -1,0 +1,10 @@
+import { Request, Response, NextFunction } from "express";
+import multer from "multer";
+
+export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ error: err.message });
+  }
+  console.error(err);
+  return res.status(500).json({ error: "Something went wrong" });
+}

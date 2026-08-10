@@ -1,7 +1,8 @@
 // import { Navbar } from "@/components/layout/Navbar";
 import Navbar from "../components/layout/Navbar";
-import { Button } from "../components/ui/Button";
+import Link from "next/link";
 import { PropertyCard } from "../components/property/PropertyCard";
+import { LiveListings } from "../components/property/LiveListings";
 import { VerifiedStamp } from "../components/ui/VerifiedStamp";
 
 const localities = [
@@ -38,8 +39,18 @@ export default function Home() {
               actually holds the keys — no brokerage, no middlemen, ever.
             </p>
             <div className="flex gap-3 mt-8">
-              <Button variant="accent">Search Properties</Button>
-              <Button variant="outline">Post Property Free</Button>
+              <Link
+                href="/search"
+                className="inline-flex items-center justify-center rounded-full bg-orange px-5 py-2.5 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(244,96,15,0.28)] transition hover:bg-orange-deep"
+              >
+                Search Properties
+              </Link>
+              <Link
+                href="/post-property"
+                className="inline-flex items-center justify-center rounded-full border-[1.5px] border-border px-5 py-2.5 text-sm font-semibold text-ink transition hover:border-orange hover:text-orange-deep"
+              >
+                Post Property Free
+              </Link>
             </div>
             <div className="flex gap-9 mt-9 flex-wrap">
               <div>
@@ -91,6 +102,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <LiveListings />
 
       {/* Featured projects */}
       <section className="py-16 bg-bg-warm">
