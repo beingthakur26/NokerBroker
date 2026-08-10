@@ -31,8 +31,8 @@ export default function SellerDashboardPage() {
       router.replace("/login");
       return;
     }
-    if (!loading && user?.role !== "SELLER" && user?.role !== "BUILDER") {
-      router.replace("/profile");
+    if (!loading && user?.role !== "SELLER") {
+      router.replace(user?.role === "BUILDER" ? "/dashboard/builder" : "/profile");
       return;
     }
     if (user) {

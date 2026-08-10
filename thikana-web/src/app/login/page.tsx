@@ -6,8 +6,15 @@ import { useRouter } from "next/navigation";
 import { Button } from "../../components/ui/Button";
 import { apiPost } from "../../lib/api-client";
 
-type Role = "BUYER" | "SELLER" | "BUILDER";
+type Role = "BUYER" | "SELLER" | "BUILDER" | "ADMIN";
 type LoginResponse = { user: { role: Role } };
+
+function dashboardFor(role: Role) {
+  if (role === "SELLER") return "/dashboard/seller";
+  if (role === "BUILDER") return "/dashboard/builder";
+  if (role === "ADMIN") return "/admin";
+  return "/dashboard/buyer";
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,7 +42,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { user } = await apiPost<LoginResponse>("/auth/verify-login-otp", { phone, code });
-      router.replace(user.role === "SELLER" || user.role === "BUILDER" ? "/dashboard/seller" : "/profile");
+      router.replace(dashboardFor(user.role));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
     } finally {

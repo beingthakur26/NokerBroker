@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const rbac_middleware_1 = require("../middleware/rbac.middleware");
+const upload_middleware_1 = require("../middleware/upload.middleware");
+const project_controller_1 = require("../controllers/project.controller");
+const router = (0, express_1.Router)();
+router.get("/", project_controller_1.getProjects);
+router.post("/", auth_middleware_1.requireAuth, (0, rbac_middleware_1.requireRole)("BUILDER"), rbac_middleware_1.requireVerifiedBuilder, upload_middleware_1.uploadProjectImages, project_controller_1.createProject);
+router.get("/mine", auth_middleware_1.requireAuth, (0, rbac_middleware_1.requireRole)("BUILDER"), project_controller_1.getMyProjects);
+router.get("/:id", project_controller_1.getProjectById);
+router.patch("/:id", auth_middleware_1.requireAuth, (0, rbac_middleware_1.requireRole)("BUILDER"), project_controller_1.updateProject);
+router.post("/:id/units", auth_middleware_1.requireAuth, (0, rbac_middleware_1.requireRole)("BUILDER"), project_controller_1.addUnits);
+router.delete("/units/:id", auth_middleware_1.requireAuth, (0, rbac_middleware_1.requireRole)("BUILDER"), project_controller_1.deleteUnit);
+exports.default = router;

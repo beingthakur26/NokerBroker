@@ -98,6 +98,48 @@ export default function PostPropertyPage() {
           </div>
         </div>
         <div>
+          <label className="text-sm font-semibold text-ink block mb-1.5">Description</label>
+          <textarea
+            name="description"
+            required
+            rows={4}
+            placeholder="Sunlit 2 BHK on the 9th floor, near Metro station. Newly renovated kitchen, ample parking, gated society with 24x7 security…"
+            className="w-full border-[1.5px] border-border rounded-xl2 px-3.5 py-3 text-sm resize-none"
+          />
+        </div>
+        <fieldset>
+          <legend className="text-sm font-semibold text-ink mb-1.5">Amenities</legend>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {[
+              "Gymnasium",
+              "Swimming pool",
+              "Lift",
+              "Parking",
+              "24x7 Security",
+              "Clubhouse",
+              "Garden",
+              "Children's play area",
+              "Power backup",
+              "CCTV",
+              "Jogging track",
+              "Home automation",
+            ].map((amenity) => (
+              <label
+                key={amenity}
+                className="flex items-center gap-2.5 text-sm text-ink border-[1.5px] border-border rounded-xl2 px-3.5 py-2.5 cursor-pointer hover:border-orange transition"
+              >
+                <input
+                  type="checkbox"
+                  name="amenities"
+                  value={amenity}
+                  className="accent-orange"
+                />
+                {amenity}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <div>
           <label className="text-sm font-semibold text-ink block mb-1.5">Property photos (up to 10)</label>
           <input type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple required className="w-full border-[1.5px] border-dashed border-border rounded-xl2 px-3.5 py-6 text-sm bg-bg-warm" />
         </div>

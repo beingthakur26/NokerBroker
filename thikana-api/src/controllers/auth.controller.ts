@@ -65,7 +65,16 @@ function setSession(res: Response, user: { _id: { toString(): string }; role: st
   });
 }
 
-function publicUser(user: { _id: unknown; name?: string | null; email?: string | null; phone: string; role: string; verified: boolean }) {
+function publicUser(user: {
+  _id: unknown;
+  name?: string | null;
+  email?: string | null;
+  phone: string;
+  role: string;
+  verified: boolean;
+  companyName?: string | null;
+  reraId?: string | null;
+}) {
   return {
     id: String(user._id),
     name: user.name ?? "",
@@ -73,6 +82,8 @@ function publicUser(user: { _id: unknown; name?: string | null; email?: string |
     phone: user.phone,
     role: user.role,
     verified: user.verified,
+    companyName: user.companyName ?? "",
+    reraId: user.reraId ?? "",
   };
 }
 
@@ -81,7 +92,7 @@ export async function verifySignupOtp(req: Request, res: Response) {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues[0].message });
   }
-  const { phone, code, role } = parsed.data;
+  const { phone, code, role, companyName, reraId } = parsed.data;
 
   if (!(await consumeOtp(phone, code, res))) return;
 
@@ -90,7 +101,13 @@ export async function verifySignupOtp(req: Request, res: Response) {
     return res.status(409).json({ error: "An account already exists for this number. Please log in." });
   }
 
-  const user = await User.create({ phone, role, verified: false });
+  const user = await User.create({
+    phone,
+    role,
+    verified: false,
+    companyName: role === "BUILDER" ? companyName : undefined,
+    reraId: role === "BUILDER" ? reraId : undefined,
+  });
   setSession(res, user);
   res.status(201).json({ user: publicUser(user) });
 }

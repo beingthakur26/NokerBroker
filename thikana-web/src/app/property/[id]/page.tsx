@@ -8,6 +8,7 @@ import { Button } from "../../../components/ui/Button";
 import { VerifiedStamp } from "../../../components/ui/VerifiedStamp";
 import { useContactReveal } from "../../../lib/useContactReveal";
 import { useSession } from "../../../lib/useSession";
+import { apiPost } from "../../../lib/api-client";
 import { formatPrice } from "../../../lib/formatPrice";
 
 interface ListingDetail {
@@ -18,6 +19,8 @@ interface ListingDetail {
   price: number;
   areaSqft: number;
   bhk: number;
+  description?: string;
+  amenities?: string[];
   images: string[];
   createdAt?: string;
   owner?: { name?: string; phone?: string } | null;
@@ -37,6 +40,7 @@ export default function PropertyDetailPage() {
   const [listing, setListing] = useState<ListingDetail | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -52,6 +56,36 @@ export default function PropertyDetailPage() {
       active = false;
     };
   }, [params.id]);
+
+  useEffect(() => {
+    if (!sessionLoading && user) {
+      fetch("/api/me/favorites", { credentials: "include" })
+        .then(async (res) => {
+          const data = await res.json().catch(() => null);
+          if (!res.ok) return;
+          const matches = (data?.favorites ?? []).filter(
+            (f: { targetType: string; targetId: string }) =>
+              f.targetType === "LISTING" && f.targetId === params.id
+          );
+          setSaved(matches.length > 0);
+        })
+        .catch(() => undefined);
+    }
+  }, [sessionLoading, user, params.id]);
+
+  async function toggleFavorite() {
+    if (!listing || saving) return;
+    setSaving(true);
+    try {
+      if (saved) return;
+      await apiPost("/me/favorites", { targetType: "LISTING", targetId: listing.id });
+      setSaved(true);
+    } catch {
+      // keep current state on failure
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (state === "loading") {
     return <p className="text-center mt-20 text-ink-soft">Loading...</p>;
@@ -126,7 +160,7 @@ export default function PropertyDetailPage() {
               <Button variant="primary" block>Apply for loan</Button>
             </Link>
             {!sessionLoading && user ? (
-              <Button variant="outline" block onClick={() => setSaved((value) => !value)}>
+              <Button variant="outline" block onClick={toggleFavorite} disabled={saving}>
                 {saved ? "Saved ✓" : "Save to favorites"}
               </Button>
             ) : (
@@ -135,6 +169,12 @@ export default function PropertyDetailPage() {
               </Link>
             )}
           </div>
+          <Link
+            href={`/compare?ids=${listing.id}`}
+            className="mt-3 inline-flex items-center justify-center gap-2 text-xs font-semibold text-ink-soft hover:text-orange-deep transition"
+          >
+            ⇄ Compare this property
+          </Link>
 
           <p className="text-xs text-ink-faint mt-5 leading-relaxed">
             This is an owner or RERA-verified listing on NokerBroker. No brokerage, no middlemen —
@@ -142,6 +182,29 @@ export default function PropertyDetailPage() {
           </p>
         </div>
       </div>
+
+      {(listing.description || (listing.amenities?.length ?? 0) > 0) && (
+        <section className="mt-12 max-w-[760px]">
+          {listing.description && (
+            <>
+              <h2 className="font-display text-2xl text-ink">About this property</h2>
+              <p className="text-sm text-ink-soft mt-3 leading-relaxed whitespace-pre-line">{listing.description}</p>
+            </>
+          )}
+          {(listing.amenities?.length ?? 0) > 0 && (
+            <div className="mt-6">
+              <h3 className="text-xs font-mono uppercase tracking-widest text-orange-deep mb-3">Amenities</h3>
+              <div className="flex flex-wrap gap-2">
+                {listing.amenities!.map((amenity) => (
+                  <span key={amenity} className="text-xs px-3.5 py-1.5 rounded-full border-[1.5px] border-border text-ink-soft">
+                    {amenity}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }

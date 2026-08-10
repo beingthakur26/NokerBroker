@@ -20,8 +20,8 @@ export function PropertyCard({
   noBrokerage,
   href,
 }: PropertyCardProps) {
-  const card = (
-    <div className="bg-white border border-border rounded-xl2 overflow-hidden shadow-[0_2px_4px_rgba(196,80,10,0.04),0_16px_40px_rgba(196,80,10,0.08)] hover:-translate-y-1 transition">
+  const body = (
+    <>
       <div className="relative h-44 overflow-hidden bg-gradient-to-br from-orange-pale to-orange p-3 flex items-start justify-between">
         {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -43,15 +43,18 @@ export function PropertyCard({
         <div className="font-mono text-lg font-semibold text-ink">{price}</div>
         <div className="text-sm text-ink-soft mt-1.5">{meta}</div>
         <div className="text-xs text-ink-faint mt-0.5">{locality}</div>
-        <div className="flex gap-2 mt-3.5">
-          <button className="flex-1 py-2 rounded-full border-[1.5px] border-orange text-orange-deep text-xs font-semibold">
-            Call
-          </button>
-          <button className="flex-1 py-2 rounded-full border-[1.5px] border-whatsapp text-whatsapp text-xs font-semibold">
-            WhatsApp
-          </button>
-        </div>
+        {href && (
+          <span className="mt-4 inline-flex w-full items-center justify-center rounded-full border-[1.5px] border-orange py-2 text-xs font-semibold text-orange-deep transition group-hover:bg-orange group-hover:text-white">
+            View details
+          </span>
+        )}
       </div>
+    </>
+  );
+
+  const card = (
+    <div className="group bg-white border border-border rounded-xl2 overflow-hidden shadow-[0_2px_4px_rgba(196,80,10,0.04),0_16px_40px_rgba(196,80,10,0.08)] hover:-translate-y-1 transition">
+      {body}
     </div>
   );
 

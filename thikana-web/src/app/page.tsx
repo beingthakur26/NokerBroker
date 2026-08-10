@@ -1,28 +1,19 @@
 // import { Navbar } from "@/components/layout/Navbar";
-import Navbar from "../components/layout/Navbar";
 import Link from "next/link";
-import { PropertyCard } from "../components/property/PropertyCard";
 import { LiveListings } from "../components/property/LiveListings";
+import { FeaturedProjects } from "../components/project/FeaturedProjects";
 import { VerifiedStamp } from "../components/ui/VerifiedStamp";
 
 const localities = [
-  { name: "Andheri West", count: "3,240 listings" },
-  { name: "Borivali", count: "1,860 listings" },
-  { name: "Thane West", count: "4,110 listings" },
-  { name: "Navi Mumbai — Vashi", count: "2,290 listings" },
-];
-
-const featured = [
-  { price: "₹1.4 Cr onwards", meta: "Kalpataru Vivant · 2 & 3 BHK", locality: "Thane West · Possession Dec 2027", verified: true },
-  { price: "₹2.1 Cr onwards", meta: "Lodha Amara · 1, 2 & 3 BHK", locality: "Kolshet Road, Thane", verified: true },
-  { price: "₹95 L onwards", meta: "Godrej Horizon · 1 & 2 BHK", locality: "Vikhroli, Central Mumbai", verified: true },
+  { name: "Andheri West", slug: "andheri-west", count: "3,240 listings" },
+  { name: "Borivali West", slug: "borivali-west", count: "1,860 listings" },
+  { name: "Thane West", slug: "thane-west", count: "4,110 listings" },
+  { name: "Vashi", slug: "vashi", count: "2,290 listings" },
 ];
 
 export default function Home() {
   return (
     <>
-      <Navbar />
-
       {/* Hero */}
       <section className="relative overflow-hidden py-20">
         <div className="absolute -top-56 -right-44 w-[640px] h-[640px] rounded-full bg-[radial-gradient(circle,rgba(244,96,15,0.20),rgba(255,138,76,0.05)_60%,transparent_72%)]" />
@@ -93,11 +84,15 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {localities.map((l) => (
-              <div key={l.name} className="bg-white border border-border rounded-xl2 p-5 relative overflow-hidden min-h-[104px] flex flex-col justify-end hover:border-orange hover:-translate-y-0.5 transition">
+              <Link
+                key={l.name}
+                href={`/mumbai/${l.slug}`}
+                className="bg-white border border-border rounded-xl2 p-5 relative overflow-hidden min-h-[104px] flex flex-col justify-end hover:border-orange hover:-translate-y-0.5 transition"
+              >
                 <div className="absolute -top-7 -right-7 w-20 h-20 rounded-full bg-orange-pale" />
                 <b className="font-display text-base relative">{l.name}</b>
                 <span className="font-mono text-[11.5px] text-ink-soft relative">{l.count}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -112,11 +107,7 @@ export default function Home() {
             Featured
           </span>
           <h2 className="font-display text-2xl text-ink mb-7">New builder projects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {featured.map((p) => (
-              <PropertyCard key={p.meta} {...p} />
-            ))}
-          </div>
+          <FeaturedProjects />
         </div>
       </section>
     </>

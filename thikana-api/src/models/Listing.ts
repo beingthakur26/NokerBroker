@@ -9,6 +9,8 @@ const listingSchema = new Schema(
     price: { type: Number, required: true },
     areaSqft: { type: Number, required: true },
     bhk: { type: Number, required: true },
+    description: { type: String, trim: true, maxlength: 2000 },
+    amenities: [String], // capped at 20 by validation
     images: [String], // public ImageKit URLs
     status: { type: String, enum: ["PENDING", "LIVE", "REJECTED", "PAUSED"], default: "PENDING" },
     ownershipDocPath: { type: String, select: false }, // ImageKit filePath — needs signing to view, excluded from every query by default

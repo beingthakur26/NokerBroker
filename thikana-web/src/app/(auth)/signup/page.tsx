@@ -9,10 +9,18 @@ type Role = "BUYER" | "SELLER" | "BUILDER";
 type Step = "phone" | "otp";
 type VerifyOtpResponse = { user: { role: Role } };
 
+const roleCopy: Record<Role, { icon: string; label: string }> = {
+  BUYER: { icon: "🔑", label: "Buyer" },
+  SELLER: { icon: "🏠", label: "Seller" },
+  BUILDER: { icon: "🏗️", label: "Builder" },
+};
+
 export default function SignupPage() {
   const router = useRouter();
   const [role, setRole] = useState<Role>("BUYER");
   const [phone, setPhone] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [reraId, setReraId] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<Step>("phone");
   const [error, setError] = useState("");
@@ -35,12 +43,19 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
-      const { user } = await apiPost<VerifyOtpResponse>("/auth/verify-signup-otp", { phone, code, role });
-      if (user.role === "SELLER" || user.role === "BUILDER") {
-        router.replace("/post-property");
-        return;
+      const body: Record<string, string> = { phone, code, role };
+      if (role === "BUILDER") {
+        body.companyName = companyName.trim();
+        body.reraId = reraId.trim();
       }
-      router.replace("/profile");
+      const { user } = await apiPost<VerifyOtpResponse>("/auth/verify-signup-otp", body);
+      if (user.role === "BUYER") {
+        router.replace("/dashboard/buyer");
+      } else if (user.role === "BUILDER") {
+        router.replace("/dashboard/builder");
+      } else {
+        router.replace("/post-property");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
     } finally {
@@ -62,10 +77,42 @@ export default function SignupPage() {
               role === r ? "border-orange bg-orange-pale" : "border-border"
             }`}
           >
-            {r === "BUYER" ? "🔑 Buyer" : r === "SELLER" ? "🏠 Seller" : "🏗️ Builder"}
+            {roleCopy[r].icon} {roleCopy[r].label}
           </button>
         ))}
       </div>
+
+      {role === "BUILDER" && step === "phone" && (
+        <div className="mb-4 rounded-xl2 border border-border bg-bg-warm p-4 space-y-3">
+          <div>
+            <label htmlFor="companyName" className="text-sm font-semibold text-ink block mb-1.5">
+              Company name
+            </label>
+            <input
+              id="companyName"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="e.g. Kalpataru Realty"
+              className="w-full border-[1.5px] border-border rounded-xl2 px-3.5 py-3 text-sm bg-white"
+            />
+          </div>
+          <div>
+            <label htmlFor="reraId" className="text-sm font-semibold text-ink block mb-1.5">
+              RERA ID
+            </label>
+            <input
+              id="reraId"
+              value={reraId}
+              onChange={(e) => setReraId(e.target.value)}
+              placeholder="e.g. P51900012345"
+              className="w-full border-[1.5px] border-border rounded-xl2 px-3.5 py-3 text-sm bg-white"
+            />
+          </div>
+          <p className="text-xs text-ink-soft">
+            Your company is reviewed by our team before you can publish projects.
+          </p>
+        </div>
+      )}
 
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 

@@ -9,9 +9,22 @@ const otpVerificationFields = z.object({
   code: z.string().length(6),
 });
 
-export const signupOtpSchema = otpVerificationFields.extend({
-  role: z.enum(["BUYER", "SELLER", "BUILDER"]),
-});
+export const signupOtpSchema = otpVerificationFields
+  .extend({
+    role: z.enum(["BUYER", "SELLER", "BUILDER"]),
+    companyName: z.string().trim().min(2).max(120).optional(),
+    reraId: z.string().trim().min(3).max(60).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.role === "BUILDER") {
+      if (!data.companyName || data.companyName.length < 2) {
+        ctx.addIssue({ code: "custom", message: "Company name is required for builder accounts" });
+      }
+      if (!data.reraId || data.reraId.length < 3) {
+        ctx.addIssue({ code: "custom", message: "RERA ID is required for builder accounts" });
+      }
+    }
+  });
 
 export const loginOtpSchema = otpVerificationFields;
 

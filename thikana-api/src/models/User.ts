@@ -8,6 +8,7 @@ const userSchema = new Schema(
     passwordHash: { type: String, select: false },
     role: { type: String, enum: ["BUYER", "SELLER", "BUILDER", "ADMIN"], required: true },
     verified: { type: Boolean, default: false },
+    companyName: { type: String, trim: true, maxlength: 120 },
     reraId: String,
   },
   { timestamps: true }

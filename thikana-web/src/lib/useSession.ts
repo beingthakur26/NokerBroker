@@ -9,6 +9,8 @@ export interface SessionUser {
   phone: string;
   role: "BUYER" | "SELLER" | "BUILDER" | "ADMIN";
   verified: boolean;
+  companyName: string;
+  reraId: string;
 }
 
 export function useSession() {

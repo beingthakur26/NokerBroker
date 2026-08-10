@@ -18,3 +18,14 @@ export const uploadListingFiles = multer({
   { name: "images", maxCount: 10 },
   { name: "ownershipDoc", maxCount: 1 },
 ]);
+
+export const uploadProjectImages = multer({
+  storage,
+  limits: { fileSize: 8 * 1024 * 1024, files: 10 },
+  fileFilter: (_req, file, cb) => {
+    if (!allowedImageTypes.includes(file.mimetype)) {
+      return cb(new Error("Unsupported file type"));
+    }
+    cb(null, true);
+  },
+}).fields([{ name: "images", maxCount: 10 }]);
