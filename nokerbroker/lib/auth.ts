@@ -1,18 +1,16 @@
 // lib/auth.ts
+import NextAuth from "next-auth";
+import type { Provider } from "next-auth/providers";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { verifyWhatsappOtp } from "@/lib/whatsapp-otp";
+import { normalizeIndianNumber } from "@/lib/phone";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 
-export const authOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-
+function buildProviders(): Provider[] {
+  const providers: Provider[] = [
     CredentialsProvider({
       id: "email-password",
       name: "Email and password",
@@ -23,9 +21,11 @@ export const authOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         await dbConnect();
-        const user = await User.findOne({ email: credentials.email });
+        const email = String(credentials.email);
+        const password = String(credentials.password);
+        const user = await User.findOne({ email });
         if (!user?.passwordHash) return null;
-        const valid = await bcrypt.compare(credentials.password, user.passwordHash);
+        const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
         return { id: user._id.toString(), name: user.name, email: user.email };
       },
@@ -37,29 +37,52 @@ export const authOptions = {
       credentials: {
         whatsappNumber: { label: "WhatsApp number", type: "text" },
         otp: { label: "OTP", type: "text" },
+        name: { label: "Name", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.whatsappNumber || !credentials?.otp) return null;
-        const isValid = await verifyWhatsappOtp(credentials.whatsappNumber, credentials.otp);
+        const rawNumber = String(credentials.whatsappNumber);
+        const rawOtp = String(credentials.otp);
+        const rawName = String(credentials.name ?? "");
+        const whatsappNumber = normalizeIndianNumber(rawNumber);
+        const isValid = await verifyWhatsappOtp(whatsappNumber, rawOtp);
         if (!isValid) return null;
 
         await dbConnect();
-        let user = await User.findOne({ whatsappNumber: credentials.whatsappNumber });
+        let user = await User.findOne({ whatsappNumber });
         if (!user) {
           user = await User.create({
-            whatsappNumber: credentials.whatsappNumber,
+            whatsappNumber,
             whatsappVerified: true,
-            name: "New User",
-            email: `${credentials.whatsappNumber}@placeholder.nokerbroker.in`,
+            name: rawName.trim() || "New User",
+            email: `${whatsappNumber.replace(/\D/g, "")}@placeholder.nokerbroker.in`,
           });
-        } else if (!user.whatsappVerified) {
-          user.whatsappVerified = true;
+        } else {
+          if (!user.whatsappVerified) user.whatsappVerified = true;
+          if (rawName.trim()) user.name = rawName.trim();
           await user.save();
         }
         return { id: user._id.toString(), name: user.name, email: user.email };
       },
     }),
-  ],
+  ];
+
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    providers.push(
+      GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      })
+    );
+  }
+
+  return providers;
+}
+
+export const authOptions = {
+  providers: buildProviders(),
   session: { strategy: "jwt" as const },
   pages: { signIn: "/login" },
 };
+
+export const { handlers, auth } = NextAuth(authOptions);

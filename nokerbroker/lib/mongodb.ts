@@ -3,13 +3,25 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_URI: string = process.env.MONGODB_URI ?? "";
 if (!MONGODB_URI) throw new Error("MONGODB_URI is not set in .env.local");
 
-let cached = (global as any).mongoose;
-if (!cached) cached = (global as any).mongoose = { conn: null, promise: null };
+type MongooseCache = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
 
-async function dbConnect() {
+const globalWithMongoose = globalThis as typeof globalThis & {
+  mongoose?: MongooseCache;
+};
+
+const cached: MongooseCache = globalWithMongoose.mongoose ?? {
+  conn: null,
+  promise: null,
+};
+globalWithMongoose.mongoose = cached;
+
+async function dbConnect(): Promise<typeof mongoose> {
   if (cached.conn) return cached.conn;
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, { bufferCommands: false });

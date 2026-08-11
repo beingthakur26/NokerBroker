@@ -4,6 +4,7 @@ import dns from "node:dns";
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
 import "dotenv/config";
+
 import dbConnect from "../lib/mongodb";
 import User from "../models/User";
 import Property from "../models/Property";
