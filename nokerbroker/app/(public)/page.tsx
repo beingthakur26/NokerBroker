@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Navbar } from "../components/navbar";
-import { Footer } from "../components/footer";
-import { SearchBar } from "../components/search-bar";
-import { PropertyCard } from "../components/property-card";
-import { VerifiedStamp } from "../components/verified-stamp";
-import { EmiCalculatorWidget } from "../components/emi-calculator-widget";
+import { Navbar } from "../../components/navbar";
+import { Footer } from "../../components/footer";
+import { SearchBar } from "../../components/search-bar";
+import { PropertyCard } from "../../components/property-card";
+import { VerifiedStamp } from "../../components/verified-stamp";
+import { EmiCalculatorWidget } from "../../components/emi-calculator-widget";
 
 const properties = [
   { price: "₹1.15 Cr", title: "2 BHK apartment", locality: "Chembur, Mumbai", areaSqft: 820, floor: "4th", furnishing: "Semi-furnished" },
