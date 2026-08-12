@@ -1,0 +1,19 @@
+/* styles/theme.css */
+:root {
+  --bg: #FFFFFF;
+  --bg-warm: #FFF8F3;
+  --bg-deep: #FFEFE3;
+  --ink: #241A14;
+  --ink-soft: #7A6A5F;
+  --ink-faint: #B4A398;
+  --orange: #F4600F;
+  --orange-deep: #C94A0A;
+  --orange-pale: #FFE3D1;
+  --orange-glow: #FF8A4C;
+  --verified: #0F6E5C;
+  --verified-bg: #E6F3EF;
+  --whatsapp: #25D366;
+  --border: #F0E1D3;
+  --radius: 20px;
+  --radius-sm: 12px;
+}
