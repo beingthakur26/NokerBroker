@@ -8,11 +8,11 @@ const BuilderProfileSchema = new Schema(
     reraNumber: { type: String, required: true, unique: true, trim: true },
     status: {
       type: String,
-      enum: ["VERIFIED", "FLAGGED", "REJECTED"],
-      default: "VERIFIED",
+      enum: ["PENDING", "VERIFIED", "DENIED"],
+      default: "PENDING",
     },
     documentUrls: [{ type: String }],
-    verifiedAt: { type: Date, default: Date.now },
+    verifiedAt: { type: Date },
   },
   { timestamps: true }
 );

@@ -9,8 +9,14 @@ const TYPES = ["FLAT", "HOUSE", "PLOT", "VILLA", "OFFICE", "SHOP", "OTHER"];
 const FURNISHING = ["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"];
 const STEPS = ["Type & location", "Price & size", "Details & media"];
 
+interface ListingDraft {
+  type?: string; title?: string; locality?: string; zone?: string; pinCode?: string;
+  price?: number; areaSqft?: number; bhk?: number; floor?: string; furnishing?: string;
+  description?: string; amenities?: string[]; images?: string[]; ownershipDocUrl?: string;
+}
+
 interface ListingFormProps {
-  initialData?: any;
+  initialData?: ListingDraft;
 }
 
 export function ListingForm({ initialData }: ListingFormProps = {}) {

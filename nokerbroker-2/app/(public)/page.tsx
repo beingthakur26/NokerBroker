@@ -1,6 +1,3 @@
-import dns from "node:dns";
-dns.setServers(["8.8.8.8", "1.1.1.1"]);
-
 import Link from "next/link";
 import { SearchBar } from "@/components/search-bar";
 import { PropertyCard } from "@/components/property-card";

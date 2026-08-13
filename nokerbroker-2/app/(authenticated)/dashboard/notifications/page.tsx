@@ -6,6 +6,14 @@ import dbConnect from "@/lib/mongodb";
 import Notification from "@/models/Notification";
 import { serializeDocs } from "@/lib/serialize";
 
+interface NotificationItem {
+  _id: string;
+  type: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
 export default async function NotificationsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -15,7 +23,7 @@ export default async function NotificationsPage() {
     .sort({ createdAt: -1 })
     .lean();
 
-  const notifications = serializeDocs(rawNotifications);
+  const notifications = serializeDocs(rawNotifications) as unknown as NotificationItem[];
 
   return (
     <div className="space-y-6">
@@ -30,7 +38,7 @@ export default async function NotificationsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {notifications.map((notif: any) => (
+          {notifications.map((notif) => (
             <div key={notif._id} className={`rounded-xl border p-4 shadow-sm ${notif.read ? "bg-white border-border" : "bg-orange-pale/30 border-orange-glow"}`}>
               <div className="flex items-center justify-between text-xs text-ink-soft mb-1">
                 <span className="font-bold text-orange uppercase tracking-wider">{notif.type}</span>

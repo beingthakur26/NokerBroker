@@ -13,7 +13,7 @@ export default async function ProfilePage() {
   const session = await auth();
   const userId = session!.user!.id;
 
-  let user: any = null;
+  let user: { name?: string; email?: string; whatsappNumber?: string; whatsappVerified?: boolean; role?: string; city?: string; locality?: string } | null = null;
   try {
     await dbConnect();
     user = await User.findById(userId).lean();
@@ -50,6 +50,8 @@ export default async function ProfilePage() {
       <ProfileForm
         initial={{
           name: user?.name ?? "",
+          email: user?.email ?? "",
+          whatsappNumber: user?.whatsappNumber ?? "",
           city: user?.city ?? "",
           locality: user?.locality ?? "",
         }}

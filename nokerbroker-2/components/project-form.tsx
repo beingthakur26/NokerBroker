@@ -14,7 +14,7 @@ interface UnitRow {
   areaSqft: string;
 }
 
-export function ProjectForm() {
+export function ProjectForm({ reraNumber }: { reraNumber: string }) {
   const router = useRouter();
   const toasts = useToastManager();
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +27,6 @@ export function ProjectForm() {
   const [status, setStatus] = useState("UNDER_CONSTRUCTION");
   const [progressPct, setProgressPct] = useState("");
   const [possessionDate, setPossessionDate] = useState("");
-  const [reraNumber, setReraNumber] = useState("");
   const [amenities, setAmenities] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [units, setUnits] = useState<UnitRow[]>([
@@ -38,7 +37,6 @@ export function ProjectForm() {
     name.trim() &&
     locality.trim() &&
     pinCode.trim().length === 6 &&
-    reraNumber.trim() &&
     units.every((unit) => unit.unitType.trim() && Number(unit.priceFrom) > 0 && Number(unit.areaSqft) > 0);
 
   async function submit(event: FormEvent) {
@@ -57,7 +55,6 @@ export function ProjectForm() {
           constructionStatus: status,
           progressPct: Number(progressPct) || 0,
           possessionDate: possessionDate || undefined,
-          reraNumber,
           amenities: amenities
             .split(",")
             .map((item) => item.trim())
@@ -105,8 +102,8 @@ export function ProjectForm() {
           <input id="pj-pin" inputMode="numeric" maxLength={6} value={pinCode} onChange={(event) => setPinCode(event.target.value.replace(/\D/g, ""))} placeholder="400076" required />
         </div>
         <div className="search-field form-field">
-          <label htmlFor="pj-rera">RERA number (required)</label>
-          <input id="pj-rera" value={reraNumber} onChange={(event) => setReraNumber(event.target.value)} placeholder="P51700045612" required />
+          <label>Approved RERA number</label>
+          <p className="px-3 py-2 text-sm font-mono text-ink">{reraNumber}</p>
         </div>
         <div className="search-field form-field">
           <label htmlFor="pj-status">Construction status</label>

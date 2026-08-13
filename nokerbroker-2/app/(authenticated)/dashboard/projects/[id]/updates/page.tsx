@@ -6,6 +6,18 @@ import { redirect } from "next/navigation";
 import dbConnect from "@/lib/mongodb";
 import Project from "@/models/Project";
 import { serializeDoc } from "@/lib/serialize";
+import { ProjectUpdateForm } from "@/components/project-update-form";
+
+interface ProjectUpdate {
+  _id: string;
+  month: string;
+  note?: string;
+}
+
+interface ManagedProject {
+  name: string;
+  updates?: ProjectUpdate[];
+}
 
 interface ProjectUpdatesPageProps {
   params: Promise<{ id: string }>;
@@ -30,7 +42,7 @@ export default async function ProjectUpdatesPage({ params }: ProjectUpdatesPageP
     );
   }
 
-  const project = serializeDoc(rawProject);
+  const project = serializeDoc(rawProject) as unknown as ManagedProject;
 
   return (
     <div className="space-y-6">
@@ -47,7 +59,7 @@ export default async function ProjectUpdatesPage({ params }: ProjectUpdatesPageP
       <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
         {project.updates && project.updates.length > 0 ? (
           <div className="space-y-4">
-            {project.updates.map((update: any) => (
+            {project.updates.map((update) => (
               <div key={update._id} className="p-4 border border-border rounded-xl bg-bg-warm/30 space-y-2">
                 <span className="text-xs text-orange font-bold uppercase">
                   {new Date(update.month).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
@@ -59,6 +71,7 @@ export default async function ProjectUpdatesPage({ params }: ProjectUpdatesPageP
         ) : (
           <p className="text-sm text-ink-soft text-center py-8">No construction updates posted yet.</p>
         )}
+        <ProjectUpdateForm projectId={id} />
       </div>
     </div>
   );

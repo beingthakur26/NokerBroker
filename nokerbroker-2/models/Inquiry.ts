@@ -8,7 +8,7 @@ const InquirySchema = new Schema(
     message: { type: String, required: true, trim: true },
     contactMode: {
       type: String,
-      enum: ["CALL", "CHAT", "WHATSAPP", "BOTH"],
+      enum: ["CALL", "WHATSAPP", "BOTH"],
       default: "WHATSAPP",
     },
     status: {

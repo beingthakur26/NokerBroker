@@ -3,8 +3,6 @@ import { auth } from "@/lib/auth";
 import { isAdminSession } from "@/lib/admin";
 import dbConnect from "@/lib/mongodb";
 import Inquiry from "@/models/Inquiry";
-import Property from "@/models/Property";
-import Project from "@/models/Project";
 
 const STATUSES = ["OPEN", "RESPONDED", "CLOSED"];
 
@@ -36,18 +34,8 @@ export async function PATCH(
   const inquiry = await Inquiry.findById(id);
   if (!inquiry) return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
 
-  const admin = await isAdminSession();
-  let isOwner = false;
-  if (inquiry.propertyId) {
-    const property = await Property.findById(inquiry.propertyId, "ownerId").lean();
-    isOwner = property?.ownerId?.toString() === session.user.id;
-  } else if (inquiry.projectId) {
-    const project = await Project.findById(inquiry.projectId, "builderId").lean();
-    isOwner = project?.builderId?.toString() === session.user.id;
-  }
-
-  if (!isOwner && !admin) {
-    return NextResponse.json({ error: "Not authorised" }, { status: 403 });
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Only an administrator can update an inquiry" }, { status: 403 });
   }
 
   inquiry.status = status;

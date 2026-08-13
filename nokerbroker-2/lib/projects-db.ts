@@ -22,7 +22,7 @@ export async function getLiveProjects(): Promise<ProjectView[]> {
 export async function getProjectBySlug(slug: string): Promise<ProjectView | null> {
   try {
     await dbConnect();
-    const doc = await Project.findOne({ slug })
+    const doc = await Project.findOne({ slug, status: "LIVE" })
       .populate("builderId", BUILDER_SELECT)
       .lean();
     if (!doc) return null;

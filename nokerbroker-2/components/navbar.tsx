@@ -90,8 +90,7 @@ export function Navbar() {
                     + List a project
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  {(session.user.role === "ADMIN" ||
-                    /admin@nokerbroker\.com/i.test(session.user.email ?? "")) && (
+                  {session.user.role === "ADMIN" && (
                     <DropdownMenuItem render={<Link href="/admin" />}>
                       Admin
                     </DropdownMenuItem>

@@ -8,10 +8,12 @@ export const metadata: Metadata = {
 };
 
 export default function SignupPage() {
+  const hasGoogle = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+
   return (
     <main className="section">
       <div className="wrap" style={{ maxWidth: 560 }}>
-        <SignupForm />
+        <SignupForm hasGoogle={hasGoogle} />
       </div>
     </main>
   );

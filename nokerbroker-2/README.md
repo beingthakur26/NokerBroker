@@ -34,3 +34,30 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Admin access
+
+Promote an existing account through MongoDB without opening the database manually:
+
+```bash
+npm run admin:grant -- person@example.com
+```
+
+The user must sign out and sign back in, then can open `/admin`. To remove access:
+
+```bash
+npm run admin:revoke -- person@example.com
+```
+
+`ADMIN_EMAILS` in `.env.local` remains an optional bootstrap allowlist for the first administrator. Keep it limited to trusted emails.
+
+## Google sign-in repair
+
+If Google sign-in reports `E11000 ... whatsappNumber ... null`, run this once after pulling the project update:
+
+```bash
+npm run db:fix-user-indexes
+```
+
+It replaces the legacy index with a unique sparse index, allowing Google users to add their WhatsApp number later in Profile.
+
+If Atlas reports that it cannot connect to any servers, open **MongoDB Atlas → Network Access** and add the current computer's public IP address, then confirm the cluster is running. For development only, `0.0.0.0/0` can be used temporarily; do not leave that rule enabled in production.

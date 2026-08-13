@@ -5,19 +5,29 @@ import dbConnect from "@/lib/mongodb";
 import Property from "@/models/Property";
 import { serializeDocs } from "@/lib/serialize";
 
+interface ComparableProperty {
+  _id: string;
+  title: string;
+  price: number;
+  locality: string;
+  areaSqft: number;
+  bhk?: number;
+  amenities?: string[];
+}
+
 interface ComparePageProps {
   searchParams: Promise<{ ids?: string }>;
 }
 
 export default async function ComparePage({ searchParams }: ComparePageProps) {
   const { ids } = await searchParams;
-  const propertyIds = ids ? ids.split(",").filter(Boolean) : [];
+  const propertyIds = ids ? ids.split(",").filter(Boolean).slice(0, 4) : [];
 
-  let properties: any[] = [];
+  let properties: ComparableProperty[] = [];
   if (propertyIds.length > 0) {
     await dbConnect();
-    const rawProps = await Property.find({ _id: { $in: propertyIds } }).lean();
-    properties = serializeDocs(rawProps);
+    const rawProps = await Property.find({ _id: { $in: propertyIds }, status: "ACTIVE" }).lean();
+    properties = serializeDocs(rawProps) as unknown as ComparableProperty[];
   }
 
   return (

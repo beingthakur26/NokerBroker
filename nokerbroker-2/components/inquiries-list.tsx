@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { MessageCircle, Phone } from "lucide-react";
 import type { InquiryView } from "@/lib/serialize";
-import { useToastManager } from "@/components/ui/toast";
 
 interface InquiriesListProps {
   received: InquiryView[];
@@ -63,7 +60,7 @@ export function InquiriesList({ received, sent }: InquiriesListProps) {
           <h2>{tab === "received" ? "No enquiries received yet" : "No enquiries sent yet"}</h2>
           <p>
             {tab === "received"
-              ? "When buyers enquire about your listings or projects, they appear here with full contact details."
+              ? "Our team manages the response to enquiries about your listings and projects."
               : "Send an enquiry from any listing to track it here."}
           </p>
         </div>
@@ -89,26 +86,7 @@ export function InquiriesList({ received, sent }: InquiriesListProps) {
                 <div className="inq-foot">
                   <span>Prefers: {inquiry.contactMode}</span>
                   {tab === "received" ? (
-                    <div className="inq-cta">
-                      {inquiry.senderWhatsapp && (
-                        <a
-                          className="btn btn-whatsapp"
-                          href={`https://wa.me/${inquiry.senderWhatsapp.replace(/[^\d]/g, "")}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <MessageCircle size={14} />
-                          WhatsApp
-                        </a>
-                      )}
-                      {inquiry.senderEmail && (
-                        <a className="btn btn-ghost" href={`mailto:${inquiry.senderEmail}`}>
-                          <Phone size={14} />
-                          Email
-                        </a>
-                      )}
-                      <MarkResponded id={inquiry._id} status={inquiry.status} />
-                    </div>
+                    <span>Our team will review and respond to this enquiry.</span>
                   ) : null}
                 </div>
               </div>
@@ -117,43 +95,5 @@ export function InquiriesList({ received, sent }: InquiriesListProps) {
         </div>
       )}
     </div>
-  );
-}
-
-function MarkResponded({ id, status }: { id: string; status: string }) {
-  const router = useRouter();
-  const toasts = useToastManager();
-  const [busy, setBusy] = useState(false);
-
-  if (status === "CLOSED") return null;
-
-  async function update(next: string) {
-    setBusy(true);
-    try {
-      const response = await fetch(`/api/inquiries/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Update failed");
-      toasts.add({ type: "success", title: next === "RESPONDED" ? "Marked as responded" : "Enquiry closed" });
-      router.refresh();
-    } catch (error) {
-      toasts.add({ type: "error", title: error instanceof Error ? error.message : "Update failed" });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <>
-      <button className="btn btn-ghost" type="button" disabled={busy} onClick={() => update("RESPONDED")}>
-        {status === "OPEN" ? "Mark responded" : "Reopen"}
-      </button>
-      <button className="btn btn-ghost" type="button" disabled={busy} onClick={() => update("CLOSED")}>
-        Close
-      </button>
-    </>
   );
 }

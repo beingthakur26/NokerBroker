@@ -958,6 +958,75 @@
   .prop-media {
     height: 170px;
     position: relative;
+    overflow: hidden;
+    background: var(--bg-deep);
+  }
+
+  .prop-media-link,
+  .prop-media-frame,
+  .gallery-image-frame {
+    display: block;
+    position: absolute;
+    inset: 0;
+  }
+
+  .prop-media-frame,
+  .gallery-image-frame {
+    animation: photo-enter 360ms ease-out both;
+  }
+
+  .prop-image-count,
+  .gallery-controls {
+    position: absolute;
+    z-index: 2;
+    color: #fff;
+    background: rgb(36 26 20 / 72%);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .prop-image-count {
+    right: 12px;
+    bottom: 10px;
+    padding: 5px 8px;
+  }
+
+  .prop-image-controls {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  .prop-image-controls button,
+  .gallery-controls button {
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    background: rgb(36 26 20 / 74%);
+    pointer-events: auto;
+  }
+
+  .prop-image-controls button {
+    width: 30px;
+    height: 30px;
+    margin: 0 8px;
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+
+  .prop-card:hover .prop-image-controls button,
+  .prop-image-controls button:focus-visible {
+    opacity: 1;
+  }
+
+  @keyframes photo-enter {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
   .prop-media .stamp.sm {
@@ -1665,6 +1734,21 @@
     background: var(--bg-deep);
   }
 
+  .gallery-controls {
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px;
+  }
+
+  .gallery-controls button {
+    width: 36px;
+    height: 36px;
+  }
+
   .gallery-thumbs {
     display: flex;
     gap: 10px;
@@ -2077,9 +2161,16 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-noker-sm);
     padding: 14px 18px;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+
+  .dash-list-row:hover {
+    border-color: var(--orange);
+    box-shadow: 0 12px 30px -24px rgb(36 26 20 / 35%);
   }
 
   .dash-list-media {
+    position: relative;
     width: 96px;
     height: 72px;
     border-radius: 10px;
@@ -2124,6 +2215,14 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .dash-list-actions .listing-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .dash-list-actions .btn {

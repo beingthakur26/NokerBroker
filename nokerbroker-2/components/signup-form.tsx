@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent } from "react";
+import { signIn } from "next-auth/react";
 import { useOtpAuth } from "@/hooks/use-otp-auth";
 
-export function SignupForm() {
+export function SignupForm({ hasGoogle }: { hasGoogle: boolean }) {
   const {
     step,
     phone,
@@ -29,6 +30,10 @@ export function SignupForm() {
   function submitOtp(event: FormEvent) {
     event.preventDefault();
     if (otp.replace(/\D/g, "").length >= 4) verifyOtp();
+  }
+
+  function signUpWithGoogle() {
+    signIn("google", { callbackUrl: "/dashboard" });
   }
 
   return (
@@ -123,6 +128,17 @@ export function SignupForm() {
       )}
 
       <div style={{ borderTop: "1px solid var(--border)", marginTop: 28, paddingTop: 24 }}>
+        {hasGoogle && (
+          <button
+            className="btn btn-ghost"
+            style={{ width: "100%", justifyContent: "center", border: "1px solid var(--border)" }}
+            type="button"
+            onClick={signUpWithGoogle}
+            disabled={loading}
+          >
+            Continue with Google
+          </button>
+        )}
         <p style={{ fontSize: 13, color: "var(--ink-soft)" }}>
           By continuing you agree to NokerBroker&apos;s{" "}
           <Link className="link-more" href="/trust-safety">Terms &amp; Privacy Policy</Link>.

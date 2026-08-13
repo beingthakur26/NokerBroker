@@ -13,15 +13,15 @@ NoBroker technically also does this (you don't pick "buyer/seller/builder" at si
 |---|---|
 | Pick role at signup: Buyer / Seller / Builder | Sign up once as a **User**. No role picker. |
 | Builder is a separate account type from day 1 | "List a New Project" is an action any user can start. First time they do it, they hit a one-time **Builder Verification** step (RERA number + company docs) — in context, not at signup. |
-| Buyer dashboard, Seller dashboard, Builder dashboard are 3 separate surfaces | One **"My Space"** dashboard with sections that light up based on activity: My Listings, My Projects, Favorites, Bookings, Inquiries, Loan Applications. A user who's never sold anything just doesn't see "My Listings" populated — but the tab is always there, one click away. |
-| Admin verifies "Builder accounts" | RERA number + company doc are captured and **validated automatically** (format check + RERA number lookup where an API/registry exists) — no human approval queue. Admin can still flag a builder profile after the fact if something looks off. A user can be a normal buyer AND have 2 projects live — same account. |
+| Buyer dashboard, Seller dashboard, Builder dashboard are 3 separate surfaces | One **"My Space"** dashboard with sections that light up based on activity: My Listings, My Projects, Favorites, Inquiries, and Loan Applications. A user who's never sold anything just doesn't see "My Listings" populated — but the tab is always there, one click away. |
+| Admin verifies "Builder accounts" | RERA number and company documents are captured once, then an administrator explicitly approves or denies the builder profile. A user can be a normal buyer and have projects live using the same account after approval. |
 
 This is exactly how NoBroker, Housing.com and MagicBricks actually work under the hood, and it matches what you described almost word-for-word ("no buyer/seller/builder checklist... you can login as user and on platform you can buy any property or list your property or list a new project").
 
 ### Verification, not roles, is what protects trust
 Instead of gating by role, gate by **action**:
 - Listing a resale flat → requires ownership doc upload (already in your PRD), then goes **live immediately** — no admin approval queue. Admin can still flag/pull a listing after the fact if it's reported or looks fraudulent, but publishing isn't blocked on a human.
-- Listing a new project → requires RERA number + builder company doc, captured **once per legal entity** and live immediately (format-validated, not admin-approved) — a returning builder just reuses their verified profile for future projects, no re-upload.
+- Listing a new project → requires RERA number + builder company documents. An administrator must approve the builder profile before the first project can go live; returning approved builders reuse the profile.
 - Applying for a loan → requires PAN + basic KYC fields, not a role.
 - Everything else (browsing, EMI calculator, favoriting, inquiring) → open to any logged-in user, EMI calculator open to guests too (per your PRD).
 
@@ -31,7 +31,7 @@ Instead of gating by role, gate by **action**:
 
 Your PRD covers the NoBroker basics well. Here's what's missing that NoBroker (or any serious v2) would have — I'd fold these into the phases below rather than v1 day one:
 
-1. **Booking / Token Amount flow for builder units** — you mentioned "user can book it in advance" but the PRD's loan-only flow doesn't cover this. Needs its own model: `Booking` (unit reserved, token amount paid/pending, status: Enquired → Site Visit Scheduled → Token Paid → Booked → Agreement Signed).
+1. **Booking / Token Amount flow** — deliberately deferred from v1. Do not collect token payments or offer booking until a later release with the required payment, cancellation, and legal workflows.
 2. **Compare properties** (up to 3–4) — in your PRD's buyer experience, worth building early since it's cheap once you have the property data model.
 3. **Saved search + alerts** — "notify me when a 2BHK under 1.2Cr appears in Andheri West." Big retention driver for NoBroker-style platforms.
 4. **Verified Trust Score / badge** — beyond just RERA-verified builders: verified WhatsApp number, verified ownership doc, response rate — shown as small trust signals on listing cards (your prototype already has a `.stamp` verified-seal component — reuse it here).
@@ -39,6 +39,7 @@ Your PRD covers the NoBroker basics well. Here's what's missing that NoBroker (o
 6. **WhatsApp click-to-chat** — your prototype already has a `--whatsapp` color token, so build this in from Phase 1 — it's the #1 contact method Indian users expect over in-app chat.
 7. **Locality landing pages** (`/localities/andheri-west`) — SEO-critical, and your prototype's locality tiles already point at this.
 8. **Fraud guardrails** — WhatsApp OTP mandatory before *any* listing goes live (not just loan applications), duplicate-image detection flag for admin, rate-limit on listing creation per new account.
+9. **Admin access provisioning** — an administrator can promote or revoke an existing account through a protected admin-users screen or a MongoDB-backed CLI command. This is an internal capability only: public sign-up must never offer an admin role.
 
 ---
 
@@ -76,7 +77,6 @@ AUTHENTICATED (any logged-in user — no role gate)
   /dashboard/favorites
   /dashboard/inquiries                   received (on my listings/projects)
   /dashboard/inquiries/sent              sent (my enquiries to others)
-  /dashboard/bookings                    my token-amount bookings on projects
   /dashboard/loans                       my loan applications + status tracker
   /dashboard/saved-searches
   /dashboard/notifications
@@ -136,6 +136,7 @@ const UserSchema = new Schema({
   avatarUrl:         { type: String },
   city:              { type: String },
   locality:          { type: String },
+  role:              { type: String, enum: ["USER", "ADMIN"], default: "USER" },
 }, { timestamps: true });
 
 export default models.User || model("User", UserSchema);
@@ -248,22 +249,6 @@ const InquirySchema = new Schema({
 ```
 
 ```ts
-// models/Booking.ts — the advance-booking / token-amount flow you asked for
-const BookingSchema = new Schema({
-  userId:      { type: Types.ObjectId, ref: "User", required: true },
-  projectId:   { type: Types.ObjectId, ref: "Project", required: true },
-  unitId:      { type: Types.ObjectId, required: true },  // subdocument _id within Project.units
-  status:      {
-    type: String,
-    enum: ["ENQUIRED", "SITE_VISIT_SCHEDULED", "TOKEN_PAID", "BOOKED", "AGREEMENT_SIGNED", "CANCELLED"],
-    default: "ENQUIRED",
-  },
-  tokenAmount: { type: Number },
-  paymentRef:  { type: String },   // Razorpay payment id
-}, { timestamps: true });
-```
-
-```ts
 // models/LoanApplication.ts
 const LoanApplicationSchema = new Schema({
   userId:         { type: Types.ObjectId, ref: "User", required: true },
@@ -319,7 +304,6 @@ Chosen for one thing: **you can build and ship this solo/small-team without jugg
 | OTP delivery | **MSG91 WhatsApp API** (or Meta WhatsApp Cloud API/Gupshup) | OTP sent as a WhatsApp message, not SMS |
 | Image/file storage | **ImageKit** (real-time image optimization/transformation + CDN) | Matches your PRD's image + auto-compression requirement |
 | Email | **Resend** | |
-| Payments (token amount) | **Razorpay** | India-standard, UPI support |
 | Maps | **Mapbox** (or Google Maps if budget allows) | For locality/map search |
 | Charts | **Recharts** | EMI amortization graph |
 | State/data fetching | **TanStack Query** + React Server Components where possible | |
@@ -523,8 +507,8 @@ Auth (email/password + WhatsApp-number OTP + Google), navbar/footer shell, Home 
 **Phase 2 — Selling (2 weeks)**
 `/list-property` wizard (type → location → price/area/BHK → images via ImageKit → amenities → ownership doc upload) → **live immediately** on submit, no approval queue. Admin panel: post-publish moderation only (flag/remove on report or suspicion). Dashboard: My Listings (edit/pause/delete, view/inquiry counts).
 
-**Phase 3 — Builder projects + booking (2–3 weeks)**
-`/dashboard/verification` (RERA + company doc, format-validated and live immediately — no admin queue). `/list-project` wizard, units, construction-update gallery. Public `/projects` + `/projects/[slug]`. Booking flow (enquire → site visit → token amount via Razorpay → booked), `Booking` status tracker component.
+**Phase 3 — Builder projects (2–3 weeks)**
+`/dashboard/verification` collects RERA and company documents. An administrator reviews the submission and must approve it before the account can publish a new-construction project. `/list-project` wizard, units, construction-update gallery, and public `/projects` + `/projects/[slug]`. Booking and token payments are deferred beyond v1.
 
 **Phase 4 — Loans (1–2 weeks)**
 `/loans/apply` multi-step form pre-filled from EMI calculator or property price, document upload, `/dashboard/loans` status tracker (Submitted → Under Review → Approved/Rejected → Disbursed). Admin: lead routing to partner banks/NBFCs.
@@ -537,6 +521,18 @@ Locality landing pages, Mapbox map search, "similar properties" recommendations,
 
 **Phase 7 — Monetization + hardening (1–2 weeks)**
 Boosted/featured listings (payment), builder subscription tiers, admin analytics dashboard, rate-limiting on listing creation, image dedup flagging, load testing, 99.5% uptime checks per your NFRs.
+
+### Admin-access operations (available from Phase 1)
+
+Admins are ordinary user accounts with a `role: "ADMIN"` field in MongoDB; this is deliberately separate from buyer/seller/builder capabilities. To avoid exposing privilege escalation in the public product, create an account normally and then use either of these internal-only paths:
+
+```bash
+# In the app directory, with MONGODB_URI set in .env.local
+npm run admin:grant -- person@example.com
+npm run admin:revoke -- person@example.com
+```
+
+The command updates the existing user document directly in MongoDB. The user must sign out and sign back in for their session to pick up the new role. A guarded `/admin/users` screen can provide the same promote/revoke action for an existing administrator. `ADMIN_EMAILS` may be used only as a tightly controlled bootstrap allowlist for the very first admin.
 
 ---
 

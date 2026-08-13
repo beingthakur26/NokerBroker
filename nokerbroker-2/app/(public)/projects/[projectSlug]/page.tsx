@@ -48,8 +48,6 @@ export default async function ProjectDetailPage({
         ? "Pre-launch"
         : "Under construction";
 
-  const waText = `Hi ${project.builderName}, I'm interested in ${project.name} in ${project.locality} listed on NokerBroker. Could you share the latest price list and a site-visit slot?`;
-
   return (
     <main className="section">
       <div className="wrap">
@@ -103,6 +101,21 @@ export default async function ProjectDetailPage({
                 ))}
               </div>
             </section>
+
+            {project.updates.length > 0 && (
+              <section className="detail-block">
+                <h2>Construction updates</h2>
+                <div className="amenity-row">
+                  {project.updates.map((update) => (
+                    <div key={update._id ?? update.month}>
+                      <b>{new Date(update.month).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}</b>
+                      {update.note && <p className="detail-desc">{update.note}</p>}
+                      {update.imageUrls.map((url) => <a key={url} className="link-more" href={url} target="_blank" rel="noreferrer">View progress photo</a>)}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
 
           <aside className="detail-side">
@@ -115,9 +128,6 @@ export default async function ProjectDetailPage({
                 kind="project"
                 nextPath={`/projects/${project.slug}`}
                 listingLabel={`${project.name} in ${project.locality}`}
-                ownerName={project.builderName}
-                ownerWhatsapp={project.builderWhatsapp}
-                waText={waText}
               />
               <SaveButton slug={project.slug} kind="project" />
 

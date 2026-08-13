@@ -5,6 +5,7 @@ import { PropertyCard } from "@/components/property-card";
 import dbConnect from "@/lib/mongodb";
 import Property from "@/models/Property";
 import { toPropertyView } from "@/lib/serialize";
+import type { PropertyView } from "@/lib/serialize";
 
 interface LocalityPageProps {
   params: Promise<{ localitySlug: string }>;
@@ -22,7 +23,7 @@ export default async function LocalityPage({ params }: LocalityPageProps) {
     .sort({ createdAt: -1 })
     .lean();
 
-  const properties = rawProperties.map((p: any) => toPropertyView(p));
+  const properties: PropertyView[] = rawProperties.map((property) => toPropertyView(property));
 
   return (
     <main className="container mx-auto px-4 py-8">

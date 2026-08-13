@@ -22,7 +22,7 @@ export async function getLiveProperties(): Promise<PropertyView[]> {
 export async function getPropertyBySlug(slug: string): Promise<PropertyView | null> {
   try {
     await dbConnect();
-    const doc = await Property.findOne({ slug })
+    const doc = await Property.findOne({ slug, status: "ACTIVE" })
       .populate("ownerId", OWNER_SELECT)
       .lean();
     if (!doc) return null;

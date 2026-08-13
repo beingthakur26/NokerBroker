@@ -5,6 +5,8 @@ import Property from "@/models/Property";
 import { toPropertyView } from "@/lib/serialize";
 import { slugify } from "@/lib/slugify";
 import { matchesBudget } from "@/lib/properties";
+import { propertyCreateSchema } from "@/lib/validation/listing";
+import User from "@/models/User";
 
 const TYPES = ["FLAT", "HOUSE", "PLOT", "VILLA", "OFFICE", "SHOP", "OTHER"];
 const FURNISHING = ["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"];
@@ -45,6 +47,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Log in to list a property" }, { status: 401 });
   }
 
+  await dbConnect();
+  const user = await User.findById(session.user.id, "whatsappVerified").lean();
+  if (!user?.whatsappVerified) {
+    return NextResponse.json(
+      { error: "Verify your WhatsApp number before publishing a listing" },
+      { status: 403 }
+    );
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -71,6 +82,18 @@ export async function POST(request: Request) {
   }
   if (!ownershipDocUrl) {
     return NextResponse.json({ error: "An ownership document is required to list live" }, { status: 422 });
+  }
+
+  const validation = propertyCreateSchema.safeParse({
+    title, locality, pinCode, type, furnishing, price, areaSqft, ownershipDocUrl,
+    zone: body.zone ? String(body.zone) : undefined,
+    description: body.description ? String(body.description) : undefined,
+    floor: body.floor ? String(body.floor) : undefined,
+    bhk: body.bhk != null ? Number(body.bhk) : undefined,
+    images, amenities,
+  });
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues[0]?.message ?? "Invalid listing fields" }, { status: 422 });
   }
 
   const baseSlug = slugify(`${title}-${locality}`);

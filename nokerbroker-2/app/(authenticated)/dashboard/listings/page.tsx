@@ -67,7 +67,11 @@ export default async function MyListingsPage() {
                   <span>{property.viewCount} views</span>
                 </div>
               </div>
-              <ListingActions id={property._id} status={property.status} />
+              <div className="dash-list-actions">
+                <Link className="btn btn-ghost" href={`/dashboard/listings/${property._id}/analytics`}>Insights</Link>
+                <Link className="btn btn-ghost" href={`/dashboard/listings/${property._id}/edit`}>Edit</Link>
+                <ListingActions id={property._id} status={property.status} />
+              </div>
             </div>
           ))}
         </div>

@@ -54,6 +54,11 @@ export default async function MyProjectsPage() {
                   <span className="status status-live">Live</span>
                 </div>
               </div>
+              <div className="dash-list-actions">
+                <Link className="btn btn-ghost" href={`/projects/${project.slug}`}>View</Link>
+                <Link className="btn btn-ghost" href={`/dashboard/projects/${project._id}/units`}>Manage units</Link>
+                <Link className="btn btn-primary" href={`/dashboard/projects/${project._id}/updates`}>Post update</Link>
+              </div>
             </div>
           ))}
         </div>

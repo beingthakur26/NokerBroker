@@ -5,29 +5,15 @@ import Inquiry from "@/models/Inquiry";
 import Property from "@/models/Property";
 import Project from "@/models/Project";
 import { toInquiryView } from "@/lib/serialize";
-import { getSentInquiries, getReceivedInquiries } from "@/lib/inquiries-db";
+import { getSentInquiries } from "@/lib/inquiries-db";
+import User from "@/models/User";
 
-const CONTACT_MODES = ["CALL", "CHAT", "WHATSAPP", "BOTH"];
+const CONTACT_MODES = ["CALL", "WHATSAPP", "BOTH"];
 
-export async function GET(request: Request) {
+export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Log in to continue" }, { status: 401 });
-  }
-
-  const url = new URL(request.url);
-  const scope = url.searchParams.get("scope") ?? "sent";
-
-  if (scope === "received") {
-    await dbConnect();
-    const [properties, projects] = await Promise.all([
-      Property.find({ ownerId: session.user.id }, "_id").lean(),
-      Project.find({ builderId: session.user.id }, "_id").lean(),
-    ]);
-    const propertyIds = properties.map((property) => String(property._id));
-    const projectIds = projects.map((project) => String(project._id));
-    const received = await getReceivedInquiries(propertyIds, projectIds);
-    return NextResponse.json({ inquiries: received });
   }
 
   const sent = await getSentInquiries(session.user.id);
@@ -63,6 +49,11 @@ export async function POST(request: Request) {
   }
 
   await dbConnect();
+
+  const sender = await User.findById(session.user.id, "whatsappNumber").lean();
+  if (!sender?.whatsappNumber) {
+    return NextResponse.json({ error: "Add your WhatsApp number in Profile before sending an enquiry" }, { status: 422 });
+  }
 
   let propertyId: string | undefined;
   let projectId: string | undefined;

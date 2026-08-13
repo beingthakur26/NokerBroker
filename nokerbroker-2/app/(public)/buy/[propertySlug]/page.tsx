@@ -50,8 +50,6 @@ export default async function PropertyDetailPage({
   const listings = await getLiveProperties();
   const related = getRelatedProperties(property, listings);
   const emi = estimateEmi(property.priceValue);
-  const waText = `Hi ${property.ownerName}, I'm interested in the ${property.title} at ${property.locality} listed on NokerBroker (${formatPrice(property.priceValue)}). Could we talk?`;
-
   return (
     <main className="section">
       <div className="wrap">
@@ -112,9 +110,6 @@ export default async function PropertyDetailPage({
                 slug={property.slug}
                 nextPath={`/buy/${property.slug}`}
                 listingLabel={`${property.title} at ${property.locality}`}
-                ownerName={property.ownerName}
-                ownerWhatsapp={property.ownerWhatsapp}
-                waText={waText}
               />
               <SaveButton slug={property.slug} />
 

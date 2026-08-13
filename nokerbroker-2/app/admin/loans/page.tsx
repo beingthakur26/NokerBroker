@@ -5,6 +5,15 @@ import LoanApplication from "@/models/LoanApplication";
 import User from "@/models/User";
 import { serializeDocs } from "@/lib/serialize";
 
+interface AdminLoan {
+  _id: string;
+  loanAmount: number;
+  tenureYears: number;
+  monthlyIncome: number;
+  status: string;
+  userId?: { name?: string; whatsappNumber?: string };
+}
+
 export default async function AdminLoansPage() {
   await dbConnect();
   const rawLoans = await LoanApplication.find()
@@ -12,7 +21,7 @@ export default async function AdminLoansPage() {
     .sort({ createdAt: -1 })
     .lean();
 
-  const loans = serializeDocs(rawLoans);
+  const loans = serializeDocs(rawLoans) as unknown as AdminLoan[];
 
   return (
     <div className="space-y-6">
@@ -40,7 +49,7 @@ export default async function AdminLoansPage() {
                 </td>
               </tr>
             ) : (
-              loans.map((loan: any) => (
+              loans.map((loan) => (
                 <tr key={loan._id} className="border-b border-border text-sm">
                   <td className="p-4">
                     <p className="font-bold text-ink">{loan.userId?.name || "User"}</p>

@@ -8,6 +8,15 @@ import Property from "@/models/Property";
 import Project from "@/models/Project";
 import { serializeDocs } from "@/lib/serialize";
 
+interface SentInquiry {
+  _id: string;
+  contactMode: string;
+  status: string;
+  message: string;
+  propertyId?: { title?: string; locality?: string };
+  projectId?: { name?: string; locality?: string };
+}
+
 export default async function SentInquiriesPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -19,7 +28,7 @@ export default async function SentInquiriesPage() {
     .sort({ createdAt: -1 })
     .lean();
 
-  const inquiries = serializeDocs(rawInquiries);
+  const inquiries = serializeDocs(rawInquiries) as unknown as SentInquiry[];
 
   return (
     <div className="space-y-6">
@@ -34,13 +43,13 @@ export default async function SentInquiriesPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {inquiries.map((inq: any) => (
+          {inquiries.map((inq) => (
             <div key={inq._id} className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-2">
               <div className="flex items-center justify-between text-xs text-ink-soft">
                 <span>Contact Mode: <strong className="text-ink">{inq.contactMode}</strong></span>
                 <span>Status: <strong className="text-orange">{inq.status}</strong></span>
               </div>
-              <p className="text-sm font-medium text-ink">"{inq.message}"</p>
+              <p className="text-sm font-medium text-ink">&quot;{inq.message}&quot;</p>
               {inq.propertyId && (
                 <div className="text-xs text-ink-soft">
                   Property: <span className="font-semibold text-ink">{inq.propertyId.title} ({inq.propertyId.locality})</span>

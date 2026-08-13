@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { useToastManager } from "@/components/ui/toast";
 
 interface ProfileFormProps {
-  initial: { name: string; city: string; locality: string };
+  initial: { name: string; email: string; whatsappNumber: string; city: string; locality: string };
 }
 
 export function ProfileForm({ initial }: ProfileFormProps) {
   const router = useRouter();
   const toasts = useToastManager();
   const [name, setName] = useState(initial.name);
+  const [whatsappNumber, setWhatsappNumber] = useState(initial.whatsappNumber);
   const [city, setCity] = useState(initial.city ?? "");
   const [locality, setLocality] = useState(initial.locality ?? "");
   const [saving, setSaving] = useState(false);
@@ -24,7 +25,7 @@ export function ProfileForm({ initial }: ProfileFormProps) {
       const response = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), city, locality }),
+        body: JSON.stringify({ name: name.trim(), whatsappNumber, city, locality }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Could not save profile");
@@ -43,6 +44,15 @@ export function ProfileForm({ initial }: ProfileFormProps) {
         <div className="search-field form-field">
           <label htmlFor="pf-name">Name</label>
           <input id="pf-name" value={name} onChange={(event) => setName(event.target.value)} required />
+        </div>
+        <div className="search-field form-field">
+          <label htmlFor="pf-email">Email</label>
+          <input id="pf-email" value={initial.email} disabled aria-describedby="pf-email-help" />
+          <small id="pf-email-help" className="text-xs text-ink-soft">Email is managed by your sign-in method.</small>
+        </div>
+        <div className="search-field form-field">
+          <label htmlFor="pf-whatsapp">WhatsApp / mobile number</label>
+          <input id="pf-whatsapp" inputMode="tel" value={whatsappNumber} onChange={(event) => setWhatsappNumber(event.target.value)} placeholder="9876543210" required />
         </div>
         <div className="search-field form-field">
           <label htmlFor="pf-city">City</label>

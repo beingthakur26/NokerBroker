@@ -97,6 +97,12 @@ export interface ProjectView {
     areaSqft: number;
     floorPlanUrl?: string;
   }[];
+  updates: {
+    _id?: string;
+    month: string;
+    imageUrls: string[];
+    note?: string;
+  }[];
 }
 
 interface ProjectDocRecord {
@@ -122,6 +128,12 @@ interface ProjectDocRecord {
     priceTo?: number;
     areaSqft: number;
     floorPlanUrl?: string;
+  }[];
+  updates?: {
+    _id?: unknown;
+    month: Date;
+    imageUrls?: string[];
+    note?: string;
   }[];
 }
 
@@ -152,6 +164,12 @@ export function toProjectView(doc: ProjectDocRecord): ProjectView {
       priceTo: unit.priceTo,
       areaSqft: unit.areaSqft,
       floorPlanUrl: unit.floorPlanUrl,
+    })),
+    updates: (doc.updates ?? []).map((update) => ({
+      _id: update._id != null ? String(update._id) : undefined,
+      month: new Date(update.month).toISOString(),
+      imageUrls: update.imageUrls ?? [],
+      note: update.note,
     })),
   };
 }
@@ -258,4 +276,3 @@ export function serializeDocs<T>(docs: T[]): T[] {
   if (!docs) return [];
   return JSON.parse(JSON.stringify(docs));
 }
-

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import dbConnect from "@/lib/mongodb";
 import BuilderProfile from "@/models/BuilderProfile";
 import { serializeDoc } from "@/lib/serialize";
+import { BuilderVerificationForm } from "@/components/builder-verification-form";
 
 export default async function BuilderVerificationPage() {
   const session = await auth();
@@ -18,11 +19,11 @@ export default async function BuilderVerificationPage() {
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold text-ink">Builder Verification</h1>
-        <p className="text-sm text-ink-soft">One-time RERA and company doc verification to list new builder projects.</p>
+        <p className="text-sm text-ink-soft">Submit RERA and company documents. An administrator must approve them before you can list a new-construction project.</p>
       </div>
 
       <div className="rounded-2xl border border-border bg-white p-6 shadow-sm space-y-4">
-        {profile ? (
+        {profile && profile.status !== "DENIED" ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-ink-soft">Company Name:</span>
@@ -38,21 +39,13 @@ export default async function BuilderVerificationPage() {
                 {profile.status}
               </span>
             </div>
+            {profile.status === "PENDING" && <p className="text-sm text-ink-soft">Your documents are awaiting admin review.</p>}
           </div>
         ) : (
-          <form className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-ink uppercase mb-1">Company / Developer Name</label>
-              <input type="text" className="w-full rounded-xl border border-border px-4 py-2 text-sm" placeholder="e.g. Lodha Group" required />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-ink uppercase mb-1">MahaRERA Registration Number</label>
-              <input type="text" className="w-full rounded-xl border border-border px-4 py-2 text-sm" placeholder="e.g. P51800012345" required />
-            </div>
-            <button type="submit" className="btn btn-accent w-full">
-              Submit & Verify Instantly
-            </button>
-          </form>
+          <>
+            {profile?.status === "DENIED" && <p className="mb-4 text-sm text-red-700">Your previous submission was denied. Update the information and submit again for review.</p>}
+            <BuilderVerificationForm />
+          </>
         )}
       </div>
     </div>

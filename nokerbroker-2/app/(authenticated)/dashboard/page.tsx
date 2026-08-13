@@ -7,6 +7,7 @@ import Favorite from "@/models/Favorite";
 import Inquiry from "@/models/Inquiry";
 import { getPropertiesByOwner } from "@/lib/properties-db";
 import { getProjectsByBuilder } from "@/lib/projects-db";
+import type { PropertyView, ProjectView } from "@/lib/serialize";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -17,7 +18,7 @@ export default async function DashboardPage() {
   const session = await auth();
   const userId = session!.user!.id;
 
-  let favorites = 0, inquiries = 0, properties: any[] = [], projects: any[] = [];
+  let favorites = 0, inquiries = 0, properties: PropertyView[] = [], projects: ProjectView[] = [];
   try {
     await dbConnect();
     [favorites, inquiries, properties, projects] = await Promise.all([
@@ -32,7 +33,7 @@ export default async function DashboardPage() {
 
   const name = session!.user!.name ?? "there";
   const initial = name.trim().charAt(0).toUpperCase() || "N";
-  const activeListings = properties.filter((property: any) => property.status === "ACTIVE");
+  const activeListings = properties.filter((property) => property.status === "ACTIVE");
 
   return (
     <div>

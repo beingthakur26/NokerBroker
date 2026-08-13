@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyWhatsappOtp } from "@/lib/whatsapp-otp";
-import { isValidIndianNumber, normalizeIndianNumber } from "@/lib/phone";
+import { isValidIndianNumber, normalizeIndianNumber, toMsg91Mobile } from "@/lib/phone";
 
 export async function POST(req: Request) {
   let whatsappNumber: unknown;
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   const normalized = normalizeIndianNumber(whatsappNumber);
 
   try {
-    const isValid = await verifyWhatsappOtp(normalized, otp);
+    const isValid = await verifyWhatsappOtp(toMsg91Mobile(normalized), otp);
     if (!isValid) {
       return NextResponse.json(
         { error: "Incorrect or expired code" },

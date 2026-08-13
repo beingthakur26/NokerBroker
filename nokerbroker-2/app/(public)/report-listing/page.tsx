@@ -45,7 +45,7 @@ export default function ReportListingPage() {
             Report by email
           </a>
           <p style={{ marginTop: 18, fontSize: 13, color: "var(--ink-soft)", lineHeight: 1.6 }}>
-            Never send money, advance token amounts or OTPs to anyone you met through a listing.
+            Never send money or OTPs to anyone you met through a listing.
             NokerBroker never asks buyers for payments.
           </p>
         </div>

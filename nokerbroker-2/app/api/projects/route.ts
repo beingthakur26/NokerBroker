@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import Project from "@/models/Project";
+import BuilderProfile from "@/models/BuilderProfile";
 import { toProjectView } from "@/lib/serialize";
 import { slugify } from "@/lib/slugify";
+import { projectCreateSchema } from "@/lib/validation/listing";
 
 const STATUSES = ["PRE_LAUNCH", "UNDER_CONSTRUCTION", "READY_TO_MOVE"];
 
@@ -33,7 +35,6 @@ export async function POST(request: Request) {
   const locality = String(body.locality ?? "").trim();
   const pinCode = String(body.pinCode ?? "").trim();
   const constructionStatus = String(body.constructionStatus ?? "UNDER_CONSTRUCTION").toUpperCase();
-  const reraNumber = String(body.reraNumber ?? "").trim();
   const images = Array.isArray(body.images) ? body.images.map(String).filter(Boolean) : [];
   const amenities = Array.isArray(body.amenities) ? body.amenities.map(String).filter(Boolean) : [];
   const units = Array.isArray(body.units) ? body.units : [];
@@ -44,8 +45,29 @@ export async function POST(request: Request) {
   if (!STATUSES.includes(constructionStatus)) {
     return NextResponse.json({ error: "Invalid construction status" }, { status: 422 });
   }
-  if (!reraNumber) {
-    return NextResponse.json({ error: "A RERA number is required to list a project live" }, { status: 422 });
+  await dbConnect();
+  const builderProfile = await BuilderProfile.findOne({ userId: session.user.id }).lean();
+  if (!builderProfile || builderProfile.status !== "VERIFIED") {
+    return NextResponse.json({ error: "Your builder verification must be approved by an admin before you can list a project" }, { status: 403 });
+  }
+
+  const normalizedUnits = units.map((unit) => ({
+    unitType: String(unit?.unitType ?? "").trim(),
+    priceFrom: Number(unit?.priceFrom),
+    priceTo: unit?.priceTo != null ? Number(unit.priceTo) : undefined,
+    areaSqft: Number(unit?.areaSqft),
+    floorPlanUrl: unit?.floorPlanUrl ? String(unit.floorPlanUrl) : undefined,
+  }));
+  const validation = projectCreateSchema.safeParse({
+    name, locality, pinCode, constructionStatus, reraNumber: builderProfile.reraNumber, images, amenities,
+    zone: body.zone ? String(body.zone) : undefined,
+    description: body.description ? String(body.description) : undefined,
+    progressPct: body.progressPct != null ? Number(body.progressPct) : undefined,
+    possessionDate: body.possessionDate ? String(body.possessionDate) : undefined,
+    units: normalizedUnits,
+  });
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues[0]?.message ?? "Invalid project fields" }, { status: 422 });
   }
 
   const baseSlug = slugify(name);
@@ -67,10 +89,10 @@ export async function POST(request: Request) {
     constructionStatus,
     progressPct: body.progressPct != null ? Number(body.progressPct) : 0,
     possessionDate: body.possessionDate ? new Date(String(body.possessionDate)) : undefined,
-    reraNumber,
+    reraNumber: builderProfile.reraNumber,
     amenities,
     images,
-    units,
+    units: normalizedUnits,
     status: "LIVE",
   });
 

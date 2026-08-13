@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "admin:grant": "node scripts/admin-role.mjs grant",
+    "admin:revoke": "node scripts/admin-role.mjs revoke",
+    "db:fix-user-indexes": "node scripts/fix-user-indexes.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -21,7 +24,6 @@
     "mongoose": "^9.9.2",
     "next": "16.3.0",
     "next-auth": "^5.0.0-beta.32",
-    "razorpay": "^2.9.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",

@@ -6,7 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { verifyWhatsappOtp } from "@/lib/whatsapp-otp";
-import { normalizeIndianNumber } from "@/lib/phone";
+import { normalizeIndianNumber, toMsg91Mobile } from "@/lib/phone";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { isAdminEmail } from "@/lib/admin";
@@ -51,7 +51,7 @@ function buildProviders(): Provider[] {
         const rawOtp = String(credentials.otp);
         const rawName = String(credentials.name ?? "");
         const whatsappNumber = normalizeIndianNumber(rawNumber);
-        const isValid = await verifyWhatsappOtp(whatsappNumber, rawOtp);
+        const isValid = await verifyWhatsappOtp(toMsg91Mobile(whatsappNumber), rawOtp);
         if (!isValid) return null;
 
         await dbConnect();
@@ -90,10 +90,46 @@ export const authOptions: NextAuthConfig = {
   session: { strategy: "jwt" as const },
   pages: { signIn: "/login" },
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role ?? "USER";
+        // OAuth providers supply their own user IDs. All application models,
+        // however, reference the MongoDB User _id, so resolve (or create) the
+        // local account before storing the ID in the session JWT.
+        if (!user.email) {
+          throw new Error("The sign-in provider did not return an email address.");
+        }
+
+        await dbConnect();
+        let dbUser = await User.findOne({ email: user.email });
+
+        if (!dbUser) {
+          dbUser = await User.create({
+            name: user.name?.trim() || user.email.split("@")[0],
+            email: user.email,
+            // This branch is reached only after a successful Google OAuth sign-in.
+            emailVerified: true,
+            avatarUrl: user.image ?? undefined,
+          });
+        } else if (isAdminEmail(dbUser.email) && dbUser.role !== "ADMIN") {
+          dbUser.role = "ADMIN";
+          await dbUser.save();
+        }
+
+        token.id = dbUser._id.toString();
+        token.role = dbUser.role ?? "USER";
+      } else if (token.id) {
+        // Roles can be granted or revoked by an administrator after a user has
+        // already signed in. Refresh from MongoDB so a stale JWT cannot block
+        // a newly promoted admin (or retain revoked access).
+        try {
+          await dbConnect();
+          const dbUser = await User.findById(token.id, "role").lean();
+          if (dbUser) token.role = dbUser.role ?? "USER";
+        } catch (error) {
+          // Preserve the existing session claim during a transient DB outage.
+          // Protected pages still require the role that was previously issued.
+          console.error("[auth] Failed to refresh user role:", error);
+        }
       }
       return token;
     },

@@ -6,6 +6,13 @@ import dbConnect from "@/lib/mongodb";
 import SavedSearch from "@/models/SavedSearch";
 import { serializeDocs } from "@/lib/serialize";
 
+interface SavedSearchItem {
+  _id: string;
+  title: string;
+  alertsOn: boolean;
+  createdAt: string;
+}
+
 export default async function SavedSearchesPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -15,7 +22,7 @@ export default async function SavedSearchesPage() {
     .sort({ createdAt: -1 })
     .lean();
 
-  const savedSearches = serializeDocs(rawSearches);
+  const savedSearches = serializeDocs(rawSearches) as unknown as SavedSearchItem[];
 
   return (
     <div className="space-y-6">
@@ -30,7 +37,7 @@ export default async function SavedSearchesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {savedSearches.map((search: any) => (
+          {savedSearches.map((search) => (
             <div key={search._id} className="rounded-2xl border border-border bg-white p-5 shadow-sm space-y-2">
               <h3 className="font-bold text-ink text-base">{search.title}</h3>
               <div className="flex items-center justify-between text-xs text-ink-soft">

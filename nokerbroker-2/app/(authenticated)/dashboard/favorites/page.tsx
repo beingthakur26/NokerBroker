@@ -52,7 +52,9 @@ export default async function FavoritesPage() {
                   <span>{property.bhk > 0 ? `${property.bhk} BHK` : property.type}</span>
                 </div>
               </div>
-              <Link className="btn btn-ghost" href={`/buy/${property.slug}`}>View</Link>
+              <div className="dash-list-actions">
+                <Link className="btn btn-ghost" href={`/buy/${property.slug}`}>View details</Link>
+              </div>
             </div>
           ))}
           {projects.map((project) => (
@@ -69,7 +71,9 @@ export default async function FavoritesPage() {
                   <span>{project.constructionStatus.replace(/_/g, " ")}</span>
                 </div>
               </div>
-              <Link className="btn btn-ghost" href={`/projects/${project.slug}`}>View</Link>
+              <div className="dash-list-actions">
+                <Link className="btn btn-ghost" href={`/projects/${project.slug}`}>View details</Link>
+              </div>
             </div>
           ))}
         </div>
