@@ -3,6 +3,7 @@ import { Schema, model, models } from "mongoose";
 const InquirySchema = new Schema(
   {
     senderId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    recipientId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     propertyId: { type: Schema.Types.ObjectId, ref: "Property" },
     projectId: { type: Schema.Types.ObjectId, ref: "Project" },
     message: { type: String, required: true, trim: true },
@@ -21,6 +22,7 @@ const InquirySchema = new Schema(
 );
 
 InquirySchema.index({ senderId: 1, createdAt: -1 });
+InquirySchema.index({ recipientId: 1, createdAt: -1 });
 InquirySchema.index({ propertyId: 1, createdAt: -1 });
 
 export default models.Inquiry || model("Inquiry", InquirySchema);

@@ -38,7 +38,9 @@ export async function PATCH(
 
   const admin = await isAdminSession();
   let recipientId = "";
-  if (inquiry.propertyId) {
+  if (inquiry.recipientId) {
+    recipientId = String(inquiry.recipientId);
+  } else if (inquiry.propertyId) {
     const property = await Property.findById(inquiry.propertyId, "ownerId").lean();
     recipientId = property?.ownerId ? String(property.ownerId) : "";
   } else if (inquiry.projectId) {

@@ -14,7 +14,7 @@ export default async function InquiriesPage() {
     ? await Promise.all([getSentInquiries(userId), getPropertiesByOwner(userId), getProjectsByBuilder(userId)])
     : [[], [], []];
   const received = userId
-    ? await getReceivedInquiries(properties.map((property) => property._id), projects.map((project) => project._id))
+    ? await getReceivedInquiries(properties.map((property) => property._id), projects.map((project) => project._id), userId)
     : [];
   return <div>
     <div className="dash-head-row"><div>

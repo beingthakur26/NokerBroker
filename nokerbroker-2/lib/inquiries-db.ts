@@ -8,6 +8,7 @@ async function baseQuery(pipeline: Record<string, unknown>) {
   await dbConnect();
   const docs = await Inquiry.find(pipeline)
     .populate("senderId", SENDER_SELECT)
+    .populate("recipientId", SENDER_SELECT)
     .populate("propertyId", "title slug")
     .populate("projectId", "name slug")
     .sort({ createdAt: -1 })
@@ -19,7 +20,8 @@ export async function getSentInquiries(userId: string): Promise<InquiryView[]> {
   return baseQuery({ senderId: userId });
 }
 
-export async function getReceivedInquiries(ownerPropertyIds: string[], ownerProjectIds: string[]): Promise<InquiryView[]> {
+export async function getReceivedInquiries(ownerPropertyIds: string[], ownerProjectIds: string[], recipientId?: string): Promise<InquiryView[]> {
+  if (recipientId) return baseQuery({ recipientId });
   if (ownerPropertyIds.length === 0 && ownerProjectIds.length === 0) return [];
   const or: { propertyId?: unknown; projectId?: unknown }[] = [];
   if (ownerPropertyIds.length > 0) or.push({ propertyId: { $in: ownerPropertyIds } });

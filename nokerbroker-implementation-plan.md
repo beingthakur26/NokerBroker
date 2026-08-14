@@ -238,8 +238,11 @@ FavoriteSchema.index({ userId: 1, propertyId: 1, projectId: 1 }, { unique: true 
 
 ```ts
 // models/Inquiry.ts
+// An inquiry is a conversation container. The initial buyer message and all
+// subsequent owner/builder replies live in InquiryMessage records.
 const InquirySchema = new Schema({
   senderId:    { type: Types.ObjectId, ref: "User", required: true },
+  recipientId: { type: Types.ObjectId, ref: "User", required: true },
   propertyId:  { type: Types.ObjectId, ref: "Property" },
   projectId:   { type: Types.ObjectId, ref: "Project" },
   message:     { type: String, required: true },
@@ -247,6 +250,18 @@ const InquirySchema = new Schema({
   status:      { type: String, enum: ["OPEN", "RESPONDED", "CLOSED"], default: "OPEN" },
 }, { timestamps: true });
 ```
+
+```ts
+// models/InquiryMessage.ts
+const InquiryMessageSchema = new Schema({
+  inquiryId: { type: Types.ObjectId, ref: "Inquiry", required: true },
+  senderId:  { type: Types.ObjectId, ref: "User", required: true },
+  body:      { type: String, required: true },
+  readAt:    { type: Date },
+}, { timestamps: true });
+```
+
+Inquiry lifecycle: creating an inquiry notifies the listing owner/builder and administrators. The recipient replies in the in-product conversation; the buyer is notified, and the inquiry moves to `RESPONDED`. Both participants can view the conversation; administrators have read-only oversight plus moderation controls. Phone/WhatsApp are contact preferences, not automatically exposed chat credentials.
 
 ```ts
 // models/LoanApplication.ts

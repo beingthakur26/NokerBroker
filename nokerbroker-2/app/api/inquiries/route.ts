@@ -8,6 +8,7 @@ import { toInquiryView } from "@/lib/serialize";
 import { getSentInquiries } from "@/lib/inquiries-db";
 import User from "@/models/User";
 import { createNotification } from "@/lib/notifications";
+import InquiryMessage from "@/models/InquiryMessage";
 
 const CONTACT_MODES = ["CALL", "WHATSAPP", "BOTH"];
 
@@ -73,15 +74,19 @@ export async function POST(request: Request) {
 
   const inquiry = await Inquiry.create({
     senderId: session.user.id,
+    recipientId,
     propertyId,
     projectId,
     message,
     contactMode,
     status: "OPEN",
   });
+  await InquiryMessage.create({ inquiryId: inquiry._id, senderId: session.user.id, body: message });
   if (recipientId && recipientId !== session.user.id) {
     await createNotification(recipientId, "NEW_INQUIRY", "You received a new buyer enquiry.");
   }
+  const admins = await User.find({ role: "ADMIN", _id: { $nin: [session.user.id, recipientId] } }, "_id").lean();
+  await Promise.all(admins.map((admin) => createNotification(String(admin._id), "NEW_INQUIRY", "A new marketplace inquiry needs oversight.")));
 
   const populated = await Inquiry.findById(inquiry._id)
     .populate("senderId", "name email whatsappNumber whatsappVerified")

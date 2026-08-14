@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { InquiryView } from "@/lib/serialize";
+import { useSession } from "next-auth/react";
+import { InquiryConversation } from "@/components/inquiry-conversation";
 
 interface InquiriesListProps {
   received: InquiryView[];
@@ -28,6 +30,7 @@ function formatDate(iso: string): string {
 }
 
 export function InquiriesList({ received, sent }: InquiriesListProps) {
+  const { data: session } = useSession();
   const [tab, setTab] = useState<"received" | "sent">(received.length > 0 ? "received" : "sent");
 
   const rows = tab === "received" ? received : sent;
@@ -94,6 +97,7 @@ export function InquiriesList({ received, sent }: InquiriesListProps) {
                 <p className="inq-msg">{inquiry.message}</p>
                 <div className="inq-foot">
                   <span>Prefers: {inquiry.contactMode}</span>
+                  {session?.user?.id && <InquiryConversation inquiryId={inquiry._id} currentUserId={session.user.id} />}
                   {tab === "received" ? <span className="flex gap-2"><button className="link-more" type="button" onClick={() => setStatus(inquiry._id, "RESPONDED")}>Mark responded</button><button className="link-more" type="button" onClick={() => setStatus(inquiry._id, "CLOSED")}>Close</button></span> : null}
                 </div>
               </div>
