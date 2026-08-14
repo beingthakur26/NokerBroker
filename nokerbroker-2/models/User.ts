@@ -17,6 +17,10 @@ const UserSchema = new Schema({
   avatarUrl:         { type: String },
   city:              { type: String },
   locality:          { type: String },
+  notificationPreferences: {
+    inApp: { type: Boolean, default: true },
+    email: { type: Boolean, default: true },
+  },
   role:              { type: String, enum: ["USER", "ADMIN"], default: "USER" },
 }, { timestamps: true });
 

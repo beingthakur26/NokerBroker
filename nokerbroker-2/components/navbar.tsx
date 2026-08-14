@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notification-bell";
 
 const navLinks = [
   { href: "/buy", label: "Buy" },
@@ -57,7 +58,7 @@ export function Navbar() {
 
         <div className="nav-actions">
           {status === "authenticated" && session?.user ? (
-            <DropdownMenu>
+            <><NotificationBell /><DropdownMenu>
               <DropdownMenuTrigger
                 render={
                   <Button
@@ -98,7 +99,7 @@ export function Navbar() {
                   <DropdownMenuItem onClick={handleSignOut}>Log out</DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu></>
           ) : (
             <>
               <Link className="btn btn-ghost" href="/login">Log in</Link>

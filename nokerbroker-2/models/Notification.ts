@@ -9,6 +9,8 @@ const NotificationSchema = new Schema(
       enum: [
         "LISTING_LIVE",
         "NEW_INQUIRY",
+        "INQUIRY_REPLY",
+        "INQUIRY_CLOSED",
         "LOAN_STATUS",
         "SAVED_SEARCH_MATCH",
         "BOOKING_UPDATE",
@@ -17,6 +19,7 @@ const NotificationSchema = new Schema(
     },
     message: { type: String, required: true },
     read: { type: Boolean, default: false },
+    link: { type: String },
   },
   { timestamps: true }
 );

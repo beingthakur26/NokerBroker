@@ -8,7 +8,7 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   await dbConnect();
   const notifications = await Notification.find({ userId: session.user.id }).sort({ createdAt: -1 }).limit(100).lean();
-  return NextResponse.json({ notifications });
+  return NextResponse.json({ notifications, unreadCount: notifications.filter((notification) => !notification.read).length });
 }
 
 export async function PATCH() {
