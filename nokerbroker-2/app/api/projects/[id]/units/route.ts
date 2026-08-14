@@ -19,6 +19,9 @@ export async function POST(
   if (!unitType || !priceFrom || !areaSqft) {
     return NextResponse.json({ error: "Missing required unit fields" }, { status: 400 });
   }
+  if (floorPlanUrl && (typeof floorPlanUrl !== "string" || !/^https:\/\//.test(floorPlanUrl))) {
+    return NextResponse.json({ error: "Floor plan URL must be a secure URL" }, { status: 422 });
+  }
 
   await dbConnect();
   const project = await Project.findOne({ _id: id, builderId: session.user.id });

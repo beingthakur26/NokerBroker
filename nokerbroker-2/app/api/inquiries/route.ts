@@ -7,6 +7,7 @@ import Project from "@/models/Project";
 import { toInquiryView } from "@/lib/serialize";
 import { getSentInquiries } from "@/lib/inquiries-db";
 import User from "@/models/User";
+import { createNotification } from "@/lib/notifications";
 
 const CONTACT_MODES = ["CALL", "WHATSAPP", "BOTH"];
 
@@ -57,14 +58,17 @@ export async function POST(request: Request) {
 
   let propertyId: string | undefined;
   let projectId: string | undefined;
+  let recipientId: string | undefined;
   if (propertySlug) {
-    const property = await Property.findOne({ slug: propertySlug, status: "ACTIVE" }, "_id").lean();
+    const property = await Property.findOne({ slug: propertySlug, status: "ACTIVE" }, "_id ownerId").lean();
     if (!property) return NextResponse.json({ error: "Property not found" }, { status: 404 });
     propertyId = String(property._id);
+    recipientId = String(property.ownerId);
   } else {
-    const project = await Project.findOne({ slug: projectSlug, status: "LIVE" }, "_id").lean();
+    const project = await Project.findOne({ slug: projectSlug, status: "LIVE" }, "_id builderId").lean();
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
     projectId = String(project._id);
+    recipientId = String(project.builderId);
   }
 
   const inquiry = await Inquiry.create({
@@ -75,6 +79,9 @@ export async function POST(request: Request) {
     contactMode,
     status: "OPEN",
   });
+  if (recipientId && recipientId !== session.user.id) {
+    await createNotification(recipientId, "NEW_INQUIRY", "You received a new buyer enquiry.");
+  }
 
   const populated = await Inquiry.findById(inquiry._id)
     .populate("senderId", "name email whatsappNumber whatsappVerified")

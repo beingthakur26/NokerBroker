@@ -7,6 +7,8 @@ import { EmiCalculatorWidget } from "@/components/emi-calculator-widget";
 import { getLiveProperties } from "@/lib/properties-db";
 import { getLiveProjects } from "@/lib/projects-db";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const listings = await getLiveProperties();
   const projects = await getLiveProjects();

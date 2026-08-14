@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ProjectCard } from "@/components/project-card";
 import { getLiveProjects } from "@/lib/projects-db";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "New Projects — RERA verified builders",
   description:

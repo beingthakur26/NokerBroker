@@ -7,6 +7,10 @@ import { slugify } from "@/lib/slugify";
 import { matchesBudget } from "@/lib/properties";
 import { propertyCreateSchema } from "@/lib/validation/listing";
 import User from "@/models/User";
+import SavedSearch from "@/models/SavedSearch";
+import { createNotification } from "@/lib/notifications";
+import { matchesSavedSearch, normalizeSavedSearchFilters } from "@/lib/saved-searches";
+import { isRateLimited } from "@/lib/rate-limit";
 
 const TYPES = ["FLAT", "HOUSE", "PLOT", "VILLA", "OFFICE", "SHOP", "OTHER"];
 const FURNISHING = ["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"];
@@ -46,7 +50,6 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Log in to list a property" }, { status: 401 });
   }
-
   await dbConnect();
   const user = await User.findById(session.user.id, "whatsappVerified").lean();
   if (!user?.whatsappVerified) {
@@ -104,6 +107,10 @@ export async function POST(request: Request) {
     counter += 1;
   }
 
+  if (isRateLimited(`property-create:${session.user.id}`, 5, 60 * 60_000)) {
+    return NextResponse.json({ error: "You can publish up to five listings per hour. Please try again later." }, { status: 429 });
+  }
+
   const property = await Property.create({
     ownerId: session.user.id,
     title,
@@ -124,6 +131,20 @@ export async function POST(request: Request) {
     status: "ACTIVE",
     viewCount: 0,
   });
+
+  const savedSearches = await SavedSearch.find({ alertsOn: true }, "userId filters").lean();
+  const matchingUserIds = savedSearches
+    .filter((search) => {
+      const filters = normalizeSavedSearchFilters(search.filters);
+      return filters && matchesSavedSearch(filters, property);
+    })
+    .map((search) => String(search.userId))
+    .filter((userId) => userId !== session.user.id);
+  await Promise.all(
+    matchingUserIds.map((userId) =>
+      createNotification(userId, "SAVED_SEARCH_MATCH", `A new listing matches your saved search: ${property.title}.`)
+    )
+  );
 
   return NextResponse.json({ property: toPropertyView(property.toObject()) }, { status: 201 });
 }

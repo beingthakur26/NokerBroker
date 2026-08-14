@@ -53,12 +53,12 @@ export async function GET(request: Request) {
 
   const [properties, projects] = await Promise.all([
     propertyIds.length
-      ? Property.find({ _id: { $in: propertyIds } })
+      ? Property.find({ _id: { $in: propertyIds }, status: "ACTIVE" })
           .populate("ownerId", "name whatsappNumber whatsappVerified")
           .lean()
       : [],
     projectIds.length
-      ? Project.find({ _id: { $in: projectIds } })
+      ? Project.find({ _id: { $in: projectIds }, status: "LIVE" })
           .populate("builderId", "name whatsappNumber whatsappVerified")
           .lean()
       : [],

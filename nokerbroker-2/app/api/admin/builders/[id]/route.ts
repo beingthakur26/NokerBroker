@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import dbConnect from "@/lib/mongodb";
 import BuilderProfile from "@/models/BuilderProfile";
+import { createNotification } from "@/lib/notifications";
 
 const STATUSES = ["VERIFIED", "DENIED"];
 
@@ -24,5 +25,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     { new: true }
   ).lean();
   if (!profile) return NextResponse.json({ error: "Builder profile not found" }, { status: 404 });
+  await createNotification(
+    String(profile.userId),
+    "LISTING_LIVE",
+    status === "VERIFIED"
+      ? "Your builder profile has been approved. You can now publish projects."
+      : "Your builder verification was declined. Please update your documents and submit again."
+  );
   return NextResponse.json({ profile });
 }

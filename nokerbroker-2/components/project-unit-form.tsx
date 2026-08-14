@@ -12,6 +12,7 @@ export function ProjectUnitForm({ projectId }: { projectId: string }) {
   const [priceFrom, setPriceFrom] = useState("");
   const [priceTo, setPriceTo] = useState("");
   const [areaSqft, setAreaSqft] = useState("");
+  const [floorPlanUrl, setFloorPlanUrl] = useState("");
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -20,11 +21,11 @@ export function ProjectUnitForm({ projectId }: { projectId: string }) {
       const response = await fetch(`/api/projects/${projectId}/units`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ unitType, priceFrom: Number(priceFrom), priceTo: priceTo ? Number(priceTo) : undefined, areaSqft: Number(areaSqft) }),
+        body: JSON.stringify({ unitType, priceFrom: Number(priceFrom), priceTo: priceTo ? Number(priceTo) : undefined, areaSqft: Number(areaSqft), floorPlanUrl: floorPlanUrl || undefined }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Could not add unit");
-      setUnitType(""); setPriceFrom(""); setPriceTo(""); setAreaSqft("");
+      setUnitType(""); setPriceFrom(""); setPriceTo(""); setAreaSqft(""); setFloorPlanUrl("");
       toasts.add({ type: "success", title: "Unit configuration added" });
       router.refresh();
     } catch (error) {
@@ -40,6 +41,7 @@ export function ProjectUnitForm({ projectId }: { projectId: string }) {
       <input value={priceFrom} onChange={(event) => setPriceFrom(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="Price from" aria-label="Price from" required />
       <input value={priceTo} onChange={(event) => setPriceTo(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="Price to" aria-label="Price to" />
       <input value={areaSqft} onChange={(event) => setAreaSqft(event.target.value.replace(/\D/g, ""))} inputMode="numeric" placeholder="Area sqft" aria-label="Area in square feet" required />
+      <input value={floorPlanUrl} onChange={(event) => setFloorPlanUrl(event.target.value)} inputMode="url" placeholder="Floor plan URL (optional)" aria-label="Floor plan URL" />
       <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? "Adding…" : "Add unit"}</button>
     </form>
   );

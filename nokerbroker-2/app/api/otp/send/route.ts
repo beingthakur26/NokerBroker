@@ -14,10 +14,25 @@ const globalWithOtp = globalThis as typeof globalThis & {
   otpSendHistory?: Map<string, number[]>;
 };
 
-function remainingLimit(key: string): number {
-  const now = Date.now();
+function historyStore() {
   const history = globalWithOtp.otpSendHistory ?? new Map<string, number[]>();
   globalWithOtp.otpSendHistory = history;
+  return history;
+}
+
+function pruneHistory(now: number) {
+  const history = historyStore();
+  for (const [key, sends] of history) {
+    const recent = sends.filter((sentAt) => now - sentAt < RATE_LIMIT_WINDOW_MS);
+    if (recent.length) history.set(key, recent);
+    else history.delete(key);
+  }
+  return history;
+}
+
+function remainingLimit(key: string): number {
+  const now = Date.now();
+  const history = pruneHistory(now);
   const sends = (history.get(key) ?? []).filter((sentAt) => now - sentAt < RATE_LIMIT_WINDOW_MS);
   history.set(key, sends);
   const lastSent = sends.at(-1);
@@ -27,8 +42,7 @@ function remainingLimit(key: string): number {
 
 function recordSend(...keys: string[]) {
   const now = Date.now();
-  const history = globalWithOtp.otpSendHistory ?? new Map<string, number[]>();
-  globalWithOtp.otpSendHistory = history;
+  const history = pruneHistory(now);
   for (const key of keys) {
     const sends = (history.get(key) ?? []).filter((sentAt) => now - sentAt < RATE_LIMIT_WINDOW_MS);
     history.set(key, [...sends, now]);

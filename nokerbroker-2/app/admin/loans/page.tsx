@@ -4,6 +4,7 @@ import dbConnect from "@/lib/mongodb";
 import LoanApplication from "@/models/LoanApplication";
 import User from "@/models/User";
 import { serializeDocs } from "@/lib/serialize";
+import { AdminLoanRow } from "@/components/admin-loan-row";
 
 interface AdminLoan {
   _id: string;
@@ -39,12 +40,13 @@ export default async function AdminLoansPage() {
               <th className="p-4 font-semibold">Tenure</th>
               <th className="p-4 font-semibold">Monthly Income</th>
               <th className="p-4 font-semibold">Status</th>
+              <th className="p-4 font-semibold">Update</th>
             </tr>
           </thead>
           <tbody>
             {loans.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-sm text-ink-soft">
+                <td colSpan={6} className="p-8 text-center text-sm text-ink-soft">
                   No home loan applications submitted yet.
                 </td>
               </tr>
@@ -63,6 +65,7 @@ export default async function AdminLoansPage() {
                       {loan.status}
                     </span>
                   </td>
+                  <td className="p-4"><AdminLoanRow id={loan._id} status={loan.status} /></td>
                 </tr>
               ))
             )}

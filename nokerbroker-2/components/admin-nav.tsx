@@ -10,6 +10,7 @@ import {
   MessagesSquare,
   BarChart3,
   ShieldAlert,
+  Landmark,
 } from "lucide-react";
 
 const links = [
@@ -17,6 +18,8 @@ const links = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/listings", label: "Listings", icon: Building2 },
   { href: "/admin/projects", label: "Projects", icon: Blocks },
+  { href: "/admin/builders", label: "Builder reviews", icon: Building2 },
+  { href: "/admin/loans", label: "Loan applications", icon: Landmark },
   { href: "/admin/inquiries", label: "Inquiries", icon: MessagesSquare },
   { href: "/admin/moderation", label: "Moderation", icon: ShieldAlert },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },

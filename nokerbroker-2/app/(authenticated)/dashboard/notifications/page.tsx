@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import dbConnect from "@/lib/mongodb";
 import Notification from "@/models/Notification";
 import { serializeDocs } from "@/lib/serialize";
+import { NotificationActions } from "@/components/notification-actions";
 
 interface NotificationItem {
   _id: string;
@@ -27,9 +28,12 @@ export default async function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex items-start justify-between gap-4">
+        <div>
         <h1 className="text-2xl font-bold text-ink">Notifications Center</h1>
         <p className="text-sm text-ink-soft">Updates on your listings, loan applications, and inquiries.</p>
+        </div>
+        <NotificationActions unread={notifications.filter((notification) => !notification.read).length} />
       </div>
 
       {notifications.length === 0 ? (

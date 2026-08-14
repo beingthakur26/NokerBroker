@@ -1,6 +1,7 @@
 // lib/properties-db.ts
 import dbConnect from "@/lib/mongodb";
 import Property from "@/models/Property";
+import "@/models/User";
 import { toPropertyView, type PropertyView } from "@/lib/serialize";
 
 const OWNER_SELECT = "name whatsappNumber whatsappVerified";

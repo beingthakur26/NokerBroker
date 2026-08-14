@@ -97,6 +97,7 @@ export default async function ProjectDetailPage({
                         ? `${formatINR(unit.priceFrom)} – ${formatINR(unit.priceTo)}`
                         : formatINR(unit.priceFrom)}
                     </div>
+                    {unit.floorPlanUrl && <a className="link-more" href={unit.floorPlanUrl} target="_blank" rel="noreferrer">View floor plan</a>}
                   </div>
                 ))}
               </div>

@@ -1,6 +1,7 @@
 // lib/projects-db.ts
 import dbConnect from "@/lib/mongodb";
 import Project from "@/models/Project";
+import "@/models/User";
 import { toProjectView, type ProjectView } from "@/lib/serialize";
 
 const BUILDER_SELECT = "name whatsappNumber whatsappVerified";

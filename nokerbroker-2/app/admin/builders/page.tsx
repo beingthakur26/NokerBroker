@@ -25,7 +25,7 @@ export default async function AdminBuildersPage() {
               <th className="p-4 font-semibold">RERA Number</th>
               <th className="p-4 font-semibold">Documents</th>
               <th className="p-4 font-semibold">Status</th>
-              <th className="p-4 font-semibold">Verified Date</th>
+              <th className="p-4 font-semibold">Submitted</th>
               <th className="p-4 font-semibold">Review</th>
             </tr>
           </thead>
