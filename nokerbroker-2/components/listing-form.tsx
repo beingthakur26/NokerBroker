@@ -10,6 +10,7 @@ const FURNISHING = ["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"];
 const STEPS = ["Type & location", "Price & size", "Details & media"];
 
 interface ListingDraft {
+  _id?: string;
   type?: string; title?: string; locality?: string; zone?: string; pinCode?: string;
   price?: number; areaSqft?: number; bhk?: number; floor?: string; furnishing?: string;
   description?: string; amenities?: string[]; images?: string[]; ownershipDocUrl?: string;
@@ -55,8 +56,9 @@ export function ListingForm({ initialData }: ListingFormProps = {}) {
     }
     setSubmitting(true);
     try {
-      const response = await fetch("/api/properties", {
-        method: "POST",
+      const isEditing = Boolean(initialData?._id);
+      const response = await fetch(isEditing ? `/api/properties/${initialData!._id}` : "/api/properties", {
+        method: isEditing ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type,
@@ -80,7 +82,7 @@ export function ListingForm({ initialData }: ListingFormProps = {}) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Could not list your property");
-      toasts.add({ type: "success", title: "Your listing is live" });
+      toasts.add({ type: "success", title: isEditing ? "Listing updated" : "Your listing is live" });
       router.push("/dashboard/listings");
       router.refresh();
     } catch (error) {

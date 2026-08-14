@@ -56,7 +56,7 @@ export function EnquiryDialog({ slug, kind = "property", nextPath, listingLabel 
       if (!response.ok) throw new Error(data.error ?? "Request failed");
       setOpen(false);
       setMessage("");
-      toasts.add({ type: "success", title: "Enquiry sent — our team will contact you by phone or WhatsApp" });
+      toasts.add({ type: "success", title: "Enquiry sent to the listing owner or builder" });
     } catch (error) {
       toasts.add({ type: "error", title: error instanceof Error ? error.message : "Could not send enquiry" });
     } finally {
@@ -70,22 +70,22 @@ export function EnquiryDialog({ slug, kind = "property", nextPath, listingLabel 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Enquire about {listingLabel}</DialogTitle>
-          <DialogDescription>Your enquiry goes to NokerBroker. Our team will contact you by phone or WhatsApp.</DialogDescription>
+        <DialogDescription>Your enquiry goes directly to the listing owner or builder.</DialogDescription>
         </DialogHeader>
         {status === "authenticated" ? <form onSubmit={submitEnquiry} className="enquiry-form">
           <div className="search-field" style={{ border: "1px solid var(--border)", marginBottom: 12 }}>
-            <label htmlFor="enquiry-message">Message for our team</label>
+            <label htmlFor="enquiry-message">Your message</label>
             <textarea id="enquiry-message" rows={4} value={message} onChange={(event) => setMessage(event.target.value)} placeholder={`I'm interested in ${listingLabel}. Please contact me.`} required />
           </div>
           <div className="search-field" style={{ border: "1px solid var(--border)", marginBottom: 16 }}>
-            <label htmlFor="enquiry-mode">How should our team reach you?</label>
+            <label htmlFor="enquiry-mode">How should the owner or builder reach you?</label>
             <select id="enquiry-mode" value={contactMode} onChange={(event) => setContactMode(event.target.value)}>
               {CONTACT_MODES.map((mode) => <option key={mode.value} value={mode.value}>{mode.label}</option>)}
             </select>
           </div>
           <button className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} type="submit" disabled={submitting}>{submitting ? "Sending…" : "Send enquiry"}</button>
         </form> : <div className="enquiry-form">
-          <p style={{ color: "var(--ink-soft)", lineHeight: 1.6, marginBottom: 16 }}>Log in and add your WhatsApp number in Profile so our team can contact you.</p>
+          <p style={{ color: "var(--ink-soft)", lineHeight: 1.6, marginBottom: 16 }}>Log in and add your WhatsApp number in Profile so the owner or builder can contact you.</p>
           <Link className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }} href={`/login?next=${nextPath}`}>Log in to send an enquiry</Link>
         </div>}
       </DialogContent>

@@ -6,7 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { verifyWhatsappOtp } from "@/lib/whatsapp-otp";
-import { normalizeIndianNumber, toMsg91Mobile } from "@/lib/phone";
+import { isValidIndianNumber, normalizeIndianNumber, toMsg91Mobile } from "@/lib/phone";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { isAdminEmail } from "@/lib/admin";
@@ -50,6 +50,7 @@ function buildProviders(): Provider[] {
         const rawNumber = String(credentials.whatsappNumber);
         const rawOtp = String(credentials.otp);
         const rawName = String(credentials.name ?? "");
+        if (!isValidIndianNumber(rawNumber) || !/^\d{4,6}$/.test(rawOtp)) return null;
         const whatsappNumber = normalizeIndianNumber(rawNumber);
         const isValid = await verifyWhatsappOtp(toMsg91Mobile(whatsappNumber), rawOtp);
         if (!isValid) return null;

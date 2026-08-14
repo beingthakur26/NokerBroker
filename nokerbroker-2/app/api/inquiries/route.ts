@@ -42,8 +42,8 @@ export async function POST(request: Request) {
   if (!propertySlug && !projectSlug) {
     return NextResponse.json({ error: "A property or project is required" }, { status: 422 });
   }
-  if (!message) {
-    return NextResponse.json({ error: "A short message is required" }, { status: 422 });
+  if (!message || message.length > 2_000) {
+    return NextResponse.json({ error: "Enter a message between 1 and 2,000 characters" }, { status: 422 });
   }
   if (!CONTACT_MODES.includes(contactMode)) {
     return NextResponse.json({ error: "Invalid contact mode" }, { status: 422 });

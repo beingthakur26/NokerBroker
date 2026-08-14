@@ -32,6 +32,15 @@ export function InquiriesList({ received, sent }: InquiriesListProps) {
 
   const rows = tab === "received" ? received : sent;
 
+  async function setStatus(id: string, status: "RESPONDED" | "CLOSED") {
+    const response = await fetch(`/api/inquiries/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (response.ok) window.location.reload();
+  }
+
   return (
     <div>
       <div className="seg" role="tablist" aria-label="Inquiry type">
@@ -60,7 +69,7 @@ export function InquiriesList({ received, sent }: InquiriesListProps) {
           <h2>{tab === "received" ? "No enquiries received yet" : "No enquiries sent yet"}</h2>
           <p>
             {tab === "received"
-              ? "Our team manages the response to enquiries about your listings and projects."
+              ? "Reply to buyers directly using their preferred contact method."
               : "Send an enquiry from any listing to track it here."}
           </p>
         </div>
@@ -85,9 +94,7 @@ export function InquiriesList({ received, sent }: InquiriesListProps) {
                 <p className="inq-msg">{inquiry.message}</p>
                 <div className="inq-foot">
                   <span>Prefers: {inquiry.contactMode}</span>
-                  {tab === "received" ? (
-                    <span>Our team will review and respond to this enquiry.</span>
-                  ) : null}
+                  {tab === "received" ? <span className="flex gap-2"><button className="link-more" type="button" onClick={() => setStatus(inquiry._id, "RESPONDED")}>Mark responded</button><button className="link-more" type="button" onClick={() => setStatus(inquiry._id, "CLOSED")}>Close</button></span> : null}
                 </div>
               </div>
             );

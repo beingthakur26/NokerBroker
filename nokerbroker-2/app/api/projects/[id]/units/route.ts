@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import Project from "@/models/Project";
+import { projectUnitCreateSchema } from "@/lib/validation/listing";
 
 export async function POST(
   req: Request,
@@ -14,14 +15,12 @@ export async function POST(
   }
 
   const { id } = await params;
-  const { unitType, priceFrom, priceTo, areaSqft, floorPlanUrl } = await req.json();
-
-  if (!unitType || !priceFrom || !areaSqft) {
-    return NextResponse.json({ error: "Missing required unit fields" }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const validation = projectUnitCreateSchema.safeParse(body);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues[0]?.message ?? "Invalid unit fields" }, { status: 422 });
   }
-  if (floorPlanUrl && (typeof floorPlanUrl !== "string" || !/^https:\/\//.test(floorPlanUrl))) {
-    return NextResponse.json({ error: "Floor plan URL must be a secure URL" }, { status: 422 });
-  }
+  const { unitType, priceFrom, priceTo, areaSqft, floorPlanUrl } = validation.data;
 
   await dbConnect();
   const project = await Project.findOne({ _id: id, builderId: session.user.id });
@@ -31,9 +30,9 @@ export async function POST(
 
   project.units.push({
     unitType,
-    priceFrom: Number(priceFrom),
-    priceTo: priceTo ? Number(priceTo) : Number(priceFrom),
-    areaSqft: Number(areaSqft),
+    priceFrom,
+    priceTo: priceTo ?? priceFrom,
+    areaSqft,
     floorPlanUrl,
   });
 

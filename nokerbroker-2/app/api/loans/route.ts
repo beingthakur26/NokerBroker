@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import LoanApplication from "@/models/LoanApplication";
 import { createNotification } from "@/lib/notifications";
+import { encryptSensitive } from "@/lib/sensitive-data";
 
 export async function GET() {
   const session = await auth();
@@ -38,6 +39,14 @@ export async function POST(req: Request) {
   }
 
   await dbConnect();
+  let encryptedPan: string;
+  try {
+    encryptedPan = encryptSensitive(panNumber);
+  } catch (error) {
+    console.error("[loans] PII encryption configuration error", error);
+    return NextResponse.json({ error: "Loan applications are temporarily unavailable" }, { status: 503 });
+  }
+
   const loan = await LoanApplication.create({
     userId: session.user.id,
     propertyId,
@@ -47,7 +56,7 @@ export async function POST(req: Request) {
     monthlyIncome,
     employmentType,
     existingLoans,
-    panNumber,
+    panNumber: encryptedPan,
     documents: documents || [],
     status: "SUBMITTED",
   });

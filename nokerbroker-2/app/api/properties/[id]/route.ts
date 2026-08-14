@@ -4,6 +4,7 @@ import { isAdminSession } from "@/lib/admin";
 import dbConnect from "@/lib/mongodb";
 import Property from "@/models/Property";
 import { toPropertyView } from "@/lib/serialize";
+import { propertyCreateSchema } from "@/lib/validation/listing";
 
 export async function PATCH(
   request: Request,
@@ -39,6 +40,30 @@ export async function PATCH(
   for (const key of editable) {
     if (body[key] !== undefined) allowed[key] = body[key];
   }
+
+  // Validate the merged document, not just the fields present in this request.
+  // This keeps PATCH as strict as listing creation and avoids Mongoose cast errors.
+  const candidate = {
+    title: allowed.title ?? property.title,
+    locality: allowed.locality ?? property.locality,
+    pinCode: allowed.pinCode ?? property.pinCode,
+    type: allowed.type ?? property.type,
+    furnishing: allowed.furnishing ?? property.furnishing,
+    price: allowed.price ?? property.price,
+    areaSqft: allowed.areaSqft ?? property.areaSqft,
+    ownershipDocUrl: property.ownershipDocUrl,
+    zone: allowed.zone ?? property.zone,
+    description: allowed.description ?? property.description,
+    floor: allowed.floor ?? property.floor,
+    bhk: allowed.bhk ?? property.bhk,
+    images: allowed.images ?? property.images,
+    amenities: allowed.amenities ?? property.amenities,
+  };
+  const validation = propertyCreateSchema.safeParse(candidate);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues[0]?.message ?? "Invalid listing fields" }, { status: 422 });
+  }
+  Object.assign(allowed, validation.data);
 
   const status = String(body.status ?? "").toUpperCase();
   const adminStatuses = ["ACTIVE", "SOLD", "RENTED", "DRAFT", "ARCHIVED", "FLAGGED"];

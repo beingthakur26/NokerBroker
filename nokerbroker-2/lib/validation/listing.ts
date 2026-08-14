@@ -33,3 +33,14 @@ export const projectCreateSchema = z.object({
   amenities: z.array(z.string().trim().min(1).max(80)).max(40).default([]),
   units: z.array(z.object({ unitType: z.string().trim().min(1).max(40), priceFrom: z.number().positive(), priceTo: z.number().positive().optional(), areaSqft: z.number().positive(), floorPlanUrl: url.optional() })).min(1),
 });
+
+export const projectUnitCreateSchema = z.object({
+  unitType: z.string().trim().min(1).max(40),
+  priceFrom: z.coerce.number().positive(),
+  priceTo: z.coerce.number().positive().optional(),
+  areaSqft: z.coerce.number().positive(),
+  floorPlanUrl: url.optional(),
+}).refine((unit) => unit.priceTo === undefined || unit.priceTo >= unit.priceFrom, {
+  message: "Price to must be at least the starting price",
+  path: ["priceTo"],
+});

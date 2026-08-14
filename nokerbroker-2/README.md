@@ -64,8 +64,13 @@ styles/         Shared design tokens
 - Public queries only return `ACTIVE` properties and `LIVE` projects.
 - Builder verification is deliberately manual: an administrator approves or denies each submission.
 - OTP and listing-creation limits are in-process protections. Production multi-instance deployments should replace them with a shared rate-limit store such as Redis/Upstash.
+- PAN values are encrypted before they are stored. Set `DATA_ENCRYPTION_KEY` to a base64-encoded 32-byte key and keep it in a secret manager; do not rotate it without a migration plan.
 - Add the deployment runtime IP to MongoDB Atlas Network Access. Do not use an unrestricted Atlas network rule in production.
-- No payment provider, live MahaRERA registry integration, map search, or outbound email/WhatsApp saved-search delivery is configured yet; these require provider accounts and product decisions.
+- Map search and outbound email/WhatsApp saved-search delivery require their provider credentials and are the next operational integrations.
+
+## Deferred monetization (future version)
+
+Featured/boosted listing payments and builder subscriptions are intentionally **not** part of the current release. A later version can add them only after payment, tax, cancellation/refund, invoice, and moderation policies have been approved. The eventual design should use a payment provider webhook, immutable payment records, a seven-day boost entitlement, and a subscription entitlement model; it must never rely on client-reported payment success.
 
 ---
 

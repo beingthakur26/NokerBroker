@@ -6,6 +6,7 @@ import dbConnect from "@/lib/mongodb";
 import Property from "@/models/Property";
 import { toPropertyView } from "@/lib/serialize";
 import type { PropertyView } from "@/lib/serialize";
+import { escapeRegex } from "@/lib/search";
 
 interface LocalityPageProps {
   params: Promise<{ localitySlug: string }>;
@@ -17,7 +18,7 @@ export default async function LocalityPage({ params }: LocalityPageProps) {
 
   await dbConnect();
   const rawProperties = await Property.find({
-    locality: { $regex: new RegExp(decodedLocality, "i") },
+    locality: { $regex: new RegExp(escapeRegex(decodedLocality), "i") },
     status: "ACTIVE",
   })
     .sort({ createdAt: -1 })

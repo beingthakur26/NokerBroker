@@ -536,6 +536,22 @@ The command updates the existing user document directly in MongoDB. The user mus
 
 ---
 
+## 11. Deferred monetization release (post-v1)
+
+**Do not build this in the current version.** Featured/boosted listing payments and builder subscriptions are deferred until the marketplace has stable moderation, support, and payment policies.
+
+When authorized for a later release, implement the work in this order:
+
+1. Add `Payment`, `ListingBoost`, and `BuilderSubscription` models with immutable provider payment IDs, webhook events, invoice references, expiry dates, and audit fields.
+2. Integrate a payment provider using server-created orders and verified webhooks; never activate a boost or subscription from a client callback.
+3. Define cancellation, refund, tax/GST, invoice, chargeback, and support workflows before exposing checkout.
+4. Add seven-day individual listing boosts with transparent placement labels, expiry notifications, and admin reversal controls.
+5. Add builder subscription tiers only after quotas, project limits, renewal policy, and failed-payment handling are approved.
+
+The default v1 remains free owner listings, admin-verified builder projects, and loan-lead routing.
+
+---
+
 ## 10. Notes on Your Open Questions (from the PRD)
 
 - **In-house vs third-party loan routing:** build the `LoanApplication` model so it's routing-agnostic — Phase 4 ships with "routed to internal loan team" (simplest), Phase 7+ swaps in real bank/NBFC API integration without a schema change.

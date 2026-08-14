@@ -11,6 +11,7 @@ import SavedSearch from "@/models/SavedSearch";
 import { createNotification } from "@/lib/notifications";
 import { matchesSavedSearch, normalizeSavedSearchFilters } from "@/lib/saved-searches";
 import { isRateLimited } from "@/lib/rate-limit";
+import { escapeRegex } from "@/lib/search";
 
 const TYPES = ["FLAT", "HOUSE", "PLOT", "VILLA", "OFFICE", "SHOP", "OTHER"];
 const FURNISHING = ["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"];
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
   // This is a public endpoint. Never allow a query parameter to expose
   // draft, sold, archived, or moderator-flagged listings.
   const query: Record<string, unknown> = { status: "ACTIVE" };
-  if (locality) query.locality = new RegExp(locality, "i");
+  if (locality) query.locality = new RegExp(escapeRegex(locality), "i");
   if (type && TYPES.includes(type)) query.type = type;
 
   const docs = await Property.find(query)
