@@ -70,9 +70,10 @@ export async function POST(req: Request) {
   }
 
   const normalized = normalizeIndianNumber(whatsappNumber);
+  const development = process.env.NODE_ENV !== "production";
   const forwardedFor = req.headers.get("x-forwarded-for");
   const clientIp = forwardedFor?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
-  const remaining = Math.max(remainingLimit(`phone:${normalized}`), remainingLimit(`ip:${clientIp}`));
+  const remaining = development ? Math.max(remainingLimit(`phone:${normalized}`), remainingLimit(`ip:${clientIp}`)) : 0;
   if (remaining > 0) {
     return NextResponse.json(
       { error: `Too many codes requested. Please wait ${Math.ceil(remaining / 1000)}s before trying again.` },
@@ -80,6 +81,7 @@ export async function POST(req: Request) {
     );
   }
   const sharedAllowed = await Promise.all([
+    consumeRateLimit(`otp-cooldown-phone:${normalized}`, 1, COOLDOWN_MS),
     consumeRateLimit(`otp-phone:${normalized}`, MAX_SENDS_PER_WINDOW, RATE_LIMIT_WINDOW_MS),
     consumeRateLimit(`otp-ip:${clientIp}`, 10, RATE_LIMIT_WINDOW_MS),
   ]);
@@ -89,7 +91,7 @@ export async function POST(req: Request) {
 
   try {
     await sendWhatsappOtp(toMsg91Mobile(normalized));
-    recordSend(`phone:${normalized}`, `ip:${clientIp}`);
+    if (development) recordSend(`phone:${normalized}`, `ip:${clientIp}`);
     return NextResponse.json({ ok: true, resendIn: COOLDOWN_MS / 1000 });
   } catch {
     return NextResponse.json(

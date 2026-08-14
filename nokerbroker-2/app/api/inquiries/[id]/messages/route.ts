@@ -8,6 +8,7 @@ import User from "@/models/User";
 import Property from "@/models/Property";
 import Project from "@/models/Project";
 import { createNotification } from "@/lib/notifications";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 async function accessibleInquiry(id: string, userId: string, admin: boolean) {
   const inquiry = await Inquiry.findById(id).lean();
@@ -36,6 +37,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Log in to continue" }, { status: 401 });
+  if (!(await consumeRateLimit(`inquiry-message:${session.user.id}`, 60, 60 * 60_000))) return NextResponse.json({ error: "Message limit reached. Please try again later." }, { status: 429 });
   const body = await request.json().catch(() => null);
   const message = typeof body?.message === "string" ? body.message.trim() : "";
   if (!message || message.length > 2_000) return NextResponse.json({ error: "Enter a message between 1 and 2,000 characters" }, { status: 422 });
@@ -48,7 +50,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!admin) {
     await Inquiry.findByIdAndUpdate(id, { status: "RESPONDED" });
     const otherUser = String(inquiry.senderId) === session.user.id ? String(inquiry.recipientId) : String(inquiry.senderId);
-    await createNotification(otherUser, "NEW_INQUIRY", "You have a new reply to an inquiry.");
+    if (otherUser && otherUser !== session.user.id) await createNotification(otherUser, "INQUIRY_REPLY", "You have a new reply to an inquiry.", "/dashboard/inquiries");
   }
   const sender = await User.findById(session.user.id, "name").lean();
   return NextResponse.json({ message: { id: String(created._id), body: created.body, createdAt: created.createdAt, senderId: session.user.id, senderName: sender?.name ?? "User" } }, { status: 201 });

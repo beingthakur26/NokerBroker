@@ -22,3 +22,12 @@ export function sendPasswordResetEmail(email: string, token: string) {
   const url = `${appUrl()}/forgot-password?token=${encodeURIComponent(token)}`;
   return send(email, "Reset your NokerBroker password", `<p>Use the link below to reset your password.</p><p><a href="${url}">Reset password</a></p><p>This link expires in one hour. If you did not request this, you can ignore this email.</p>`);
 }
+
+export function sendNotificationEmail(email: string, subject: string, message: string, link?: string) {
+  const href = link ? `${appUrl()}${link.startsWith("/") ? link : `/${link}`}` : appUrl();
+  return send(email, subject, `<p>${escapeHtml(message)}</p><p><a href="${href}">Open NokerBroker</a></p>`);
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character] ?? character);
+}

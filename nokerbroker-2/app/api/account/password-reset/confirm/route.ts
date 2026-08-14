@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { hashAccountToken } from "@/lib/account-tokens";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -12,5 +13,6 @@ export async function POST(request: Request) {
   await dbConnect();
   const user = await User.findOneAndUpdate({ passwordResetTokenHash: hashAccountToken(token), passwordResetExpiresAt: { $gt: new Date() } }, { passwordHash: await bcrypt.hash(password, 12), $unset: { passwordResetTokenHash: 1, passwordResetExpiresAt: 1 } }, { new: true });
   if (!user) return NextResponse.json({ error: "This reset link is invalid or expired" }, { status: 400 });
+  await createNotification(String(user._id), "SECURITY_EVENT", "Your password was reset successfully. If this was not you, contact support immediately.", "/dashboard/profile");
   return NextResponse.json({ ok: true });
 }

@@ -15,6 +15,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   await dbConnect();
   const loan = await LoanApplication.findByIdAndUpdate(id, { status }, { new: true }).lean();
   if (!loan) return NextResponse.json({ error: "Loan application not found" }, { status: 404 });
-  await createNotification(String(loan.userId), "LOAN_STATUS", `Your loan application is now ${status.replaceAll("_", " ").toLowerCase()}.`);
+  await createNotification(String(loan.userId), "LOAN_STATUS", `Your loan application is now ${status.replaceAll("_", " ").toLowerCase()}.`, "/dashboard/loans");
   return NextResponse.json({ loan });
 }

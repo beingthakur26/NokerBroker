@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { budgetBuckets } from "@/lib/properties";
+import { LocalityAutocomplete } from "@/components/locality-autocomplete";
 
 interface BuyFiltersProps {
   locality: string;
@@ -88,13 +89,7 @@ export function BuyFilters({ locality, budget, bhk, sort }: BuyFiltersProps) {
         <label htmlFor="buy-locality">Locality</label>
         <div className="buy-filter-input">
           <Search size={16} aria-hidden="true" />
-          <input
-            id="buy-locality"
-            value={localityInput}
-            onChange={(event) => setLocalityInput(event.target.value)}
-            placeholder="Any locality"
-            autoComplete="off"
-          />
+          <LocalityAutocomplete id="buy-locality" value={localityInput} onChange={setLocalityInput} onSelect={(suggestion) => update({ locality: suggestion.locality })} placeholder="Any locality" />
           {localityInput && (
             <button
               type="button"

@@ -51,6 +51,9 @@ styles/         Shared design tokens
 | `IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`, `IMAGEKIT_URL_ENDPOINT` | ImageKit credentials |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional Google login |
 | `ADMIN_EMAILS` | Comma-separated bootstrap admin emails |
+| `MAPBOX_TOKEN` | Server-side locality autocomplete and geocoding |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Browser-restricted Mapbox token for the property map |
+| `CRON_SECRET` | Secret used by the daily saved-search scheduler |
 
 ## Operations
 
@@ -67,6 +70,10 @@ styles/         Shared design tokens
 - PAN values are encrypted before they are stored. Set `DATA_ENCRYPTION_KEY` to a base64-encoded 32-byte key and keep it in a secret manager; do not rotate it without a migration plan.
 - Add the deployment runtime IP to MongoDB Atlas Network Access. Do not use an unrestricted Atlas network rule in production.
 - Map search and outbound email/WhatsApp saved-search delivery require their provider credentials and are the next operational integrations.
+
+## Scheduled saved-search alerts
+
+`vercel.json` invokes `/api/cron/saved-searches` daily at 07:00 UTC. Vercel sends the configured `CRON_SECRET`; for another scheduler, call the route with `Authorization: Bearer <CRON_SECRET>`. The job safely delivers each matching listing once per saved search and creates in-app notifications even when email delivery is unavailable.
 
 ## Deferred monetization (future version)
 

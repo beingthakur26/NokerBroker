@@ -35,6 +35,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Not authorised" }, { status: 403 });
   }
 
+  if (body.resolveDuplicate === true) {
+    if (!admin) return NextResponse.json({ error: "Only an administrator can resolve a duplicate review" }, { status: 403 });
+    property.set({ "duplicateReview.flagged": false, "duplicateReview.reviewedAt": new Date(), "duplicateReview.reviewedBy": session.user.id });
+    await property.save();
+    return NextResponse.json({ property: toPropertyView((await Property.findById(id).populate("ownerId", "name whatsappNumber whatsappVerified").lean())!) });
+  }
+
   const allowed: Record<string, unknown> = {};
   const editable = ["title", "locality", "pinCode", "zone", "description", "floor", "type", "price", "areaSqft", "bhk", "furnishing", "images", "amenities"];
   for (const key of editable) {

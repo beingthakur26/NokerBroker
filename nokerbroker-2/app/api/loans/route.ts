@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     status: "SUBMITTED",
   });
 
-  await createNotification(session.user.id, "LOAN_STATUS", "Your loan application has been submitted for review.");
+  await createNotification(session.user.id, "LOAN_STATUS", "Your loan application has been submitted for review.", "/dashboard/loans");
 
   return NextResponse.json({ ok: true, loan });
 }

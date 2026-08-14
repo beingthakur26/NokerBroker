@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { ProfileForm } from "@/components/profile-form";
+import { NotificationPreferences } from "@/components/notification-preferences";
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -13,7 +14,7 @@ export default async function ProfilePage() {
   const session = await auth();
   const userId = session!.user!.id;
 
-  let user: { name?: string; email?: string; whatsappNumber?: string; whatsappVerified?: boolean; role?: string; city?: string; locality?: string } | null = null;
+  let user: { name?: string; email?: string; whatsappNumber?: string; whatsappVerified?: boolean; role?: string; city?: string; locality?: string; notificationPreferences?: { inApp?: boolean; email?: boolean } } | null = null;
   try {
     await dbConnect();
     user = await User.findById(userId).lean();
@@ -56,6 +57,7 @@ export default async function ProfilePage() {
           locality: user?.locality ?? "",
         }}
       />
+      <NotificationPreferences initial={user?.notificationPreferences ?? { inApp: true, email: true }} />
     </div>
   );
 }

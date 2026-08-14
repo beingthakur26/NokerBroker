@@ -7,6 +7,7 @@ import User from "@/models/User";
 import { toProjectView } from "@/lib/serialize";
 import { slugify } from "@/lib/slugify";
 import { projectCreateSchema } from "@/lib/validation/listing";
+import { createNotification } from "@/lib/notifications";
 
 const STATUSES = ["PRE_LAUNCH", "UNDER_CONSTRUCTION", "READY_TO_MOVE"];
 
@@ -103,6 +104,7 @@ export async function POST(request: Request) {
     units: normalizedUnits,
     status: "LIVE",
   });
+  await createNotification(session.user.id, "LISTING_LIVE", `Your project, ${project.name}, is now live.`, "/dashboard/projects");
 
   const populated = await Project.findById(project._id)
     .populate("builderId", "name whatsappNumber whatsappVerified")

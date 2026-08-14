@@ -7,6 +7,8 @@ const SavedSearchSchema = new Schema(
     title: { type: String, required: true },
     filters: { type: Schema.Types.Mixed, required: true },
     alertsOn: { type: Boolean, default: true },
+    deliveredListingIds: { type: [String], default: [] },
+    lastDeliveredAt: { type: Date },
   },
   { timestamps: true }
 );

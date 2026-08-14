@@ -7,11 +7,12 @@ import { slugify } from "@/lib/slugify";
 import { matchesBudget } from "@/lib/properties";
 import { propertyCreateSchema } from "@/lib/validation/listing";
 import User from "@/models/User";
-import SavedSearch from "@/models/SavedSearch";
 import { createNotification } from "@/lib/notifications";
-import { matchesSavedSearch, normalizeSavedSearchFilters } from "@/lib/saved-searches";
-import { isRateLimited } from "@/lib/rate-limit";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { escapeRegex } from "@/lib/search";
+import ImageAsset from "@/models/ImageAsset";
+import { geocodeLocality } from "@/lib/mapbox";
+import { deliverSavedSearchMatches } from "@/lib/saved-search-delivery";
 
 const TYPES = ["FLAT", "HOUSE", "PLOT", "VILLA", "OFFICE", "SHOP", "OTHER"];
 const FURNISHING = ["UNFURNISHED", "SEMI_FURNISHED", "FULLY_FURNISHED"];
@@ -108,9 +109,21 @@ export async function POST(request: Request) {
     counter += 1;
   }
 
-  if (isRateLimited(`property-create:${session.user.id}`, 5, 60 * 60_000)) {
+  if (!(await consumeRateLimit(`property-create:${session.user.id}`, 5, 60 * 60_000))) {
     return NextResponse.json({ error: "You can publish up to five listings per hour. Please try again later." }, { status: 429 });
   }
+
+  const imageAssets = images.length ? await ImageAsset.find({ url: { $in: images } }, "sha256").lean() : [];
+  const imageHashes = [...new Set(imageAssets.map((asset) => asset.sha256))];
+  const duplicateCandidates = imageHashes.length
+    ? await Property.find({ imageHashes: { $in: imageHashes } }, "_id title").limit(10).lean()
+    : [];
+  const coordinates = await geocodeLocality(locality, pinCode);
+  const duplicateReview = duplicateCandidates.length ? {
+    flagged: true,
+    reason: `Exact image hash matches ${duplicateCandidates.length} existing listing${duplicateCandidates.length === 1 ? "" : "s"}.`,
+    matchedPropertyIds: duplicateCandidates.map((candidate) => candidate._id),
+  } : undefined;
 
   const property = await Property.create({
     ownerId: session.user.id,
@@ -128,24 +141,17 @@ export async function POST(request: Request) {
     furnishing,
     ownershipDocUrl,
     images,
+    imageHashes,
+    duplicateReview,
+    location: coordinates ? { latitude: coordinates.latitude, longitude: coordinates.longitude } : undefined,
     amenities,
     status: "ACTIVE",
     viewCount: 0,
   });
 
-  const savedSearches = await SavedSearch.find({ alertsOn: true }, "userId filters").lean();
-  const matchingUserIds = savedSearches
-    .filter((search) => {
-      const filters = normalizeSavedSearchFilters(search.filters);
-      return filters && matchesSavedSearch(filters, property);
-    })
-    .map((search) => String(search.userId))
-    .filter((userId) => userId !== session.user.id);
-  await Promise.all(
-    matchingUserIds.map((userId) =>
-      createNotification(userId, "SAVED_SEARCH_MATCH", `A new listing matches your saved search: ${property.title}.`)
-    )
-  );
+  await createNotification(session.user.id, "LISTING_LIVE", `Your listing, ${property.title}, is now live.`, `/dashboard/listings/${property._id}/edit`);
+
+  await deliverSavedSearchMatches([property.toObject()]);
 
   return NextResponse.json({ property: toPropertyView(property.toObject()) }, { status: 201 });
 }

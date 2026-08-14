@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
     "admin:grant": "node scripts/admin-role.mjs grant",
     "admin:revoke": "node scripts/admin-role.mjs revoke",
     "db:fix-user-indexes": "node scripts/fix-user-indexes.mjs"
@@ -21,6 +22,7 @@
     "dotenv": "^17.4.2",
     "imagekit": "^6.0.0",
     "lucide-react": "^1.31.0",
+    "mapbox-gl": "^3.28.1",
     "mongoose": "^9.9.2",
     "next": "16.3.0",
     "next-auth": "^5.0.0-beta.32",
@@ -42,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

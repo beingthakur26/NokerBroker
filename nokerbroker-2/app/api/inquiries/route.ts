@@ -9,6 +9,7 @@ import { getSentInquiries } from "@/lib/inquiries-db";
 import User from "@/models/User";
 import { createNotification } from "@/lib/notifications";
 import InquiryMessage from "@/models/InquiryMessage";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 const CONTACT_MODES = ["CALL", "WHATSAPP", "BOTH"];
 
@@ -17,7 +18,6 @@ export async function GET() {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Log in to continue" }, { status: 401 });
   }
-
   const sent = await getSentInquiries(session.user.id);
   return NextResponse.json({ inquiries: sent });
 }
@@ -26,6 +26,9 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Log in to send an enquiry" }, { status: 401 });
+  }
+  if (!(await consumeRateLimit(`inquiry:${session.user.id}`, 20, 60 * 60_000))) {
+    return NextResponse.json({ error: "Inquiry limit reached. Please try again later." }, { status: 429 });
   }
 
   let body: Record<string, unknown>;
@@ -83,10 +86,10 @@ export async function POST(request: Request) {
   });
   await InquiryMessage.create({ inquiryId: inquiry._id, senderId: session.user.id, body: message });
   if (recipientId && recipientId !== session.user.id) {
-    await createNotification(recipientId, "NEW_INQUIRY", "You received a new buyer enquiry.");
+    await createNotification(recipientId, "NEW_INQUIRY", "You received a new buyer enquiry.", "/dashboard/inquiries");
   }
   const admins = await User.find({ role: "ADMIN", _id: { $nin: [session.user.id, recipientId] } }, "_id").lean();
-  await Promise.all(admins.map((admin) => createNotification(String(admin._id), "NEW_INQUIRY", "A new marketplace inquiry needs oversight.")));
+  await Promise.all(admins.map((admin) => createNotification(String(admin._id), "NEW_INQUIRY", "A new marketplace inquiry needs oversight.", "/admin/inquiries")));
 
   const populated = await Inquiry.findById(inquiry._id)
     .populate("senderId", "name email whatsappNumber whatsappVerified")

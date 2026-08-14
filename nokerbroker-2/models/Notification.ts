@@ -14,6 +14,7 @@ const NotificationSchema = new Schema(
         "LOAN_STATUS",
         "SAVED_SEARCH_MATCH",
         "BOOKING_UPDATE",
+        "SECURITY_EVENT",
       ],
       required: true,
     },

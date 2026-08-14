@@ -15,6 +15,7 @@ interface AdminListingRowProps {
   status: string;
   ownerName: string;
   viewCount: number;
+  duplicateReview?: { flagged: boolean; reason?: string };
 }
 
 export function AdminListingRow({
@@ -26,6 +27,7 @@ export function AdminListingRow({
   status,
   ownerName,
   viewCount,
+  duplicateReview,
 }: AdminListingRowProps) {
   const router = useRouter();
   const toasts = useToastManager();
@@ -58,6 +60,18 @@ export function AdminListingRow({
     }
   }
 
+  async function resolveDuplicate() {
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/properties/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ resolveDuplicate: true }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Request failed");
+      toasts.add({ type: "success", title: "Duplicate review marked complete" });
+      router.refresh();
+    } catch (error) { toasts.add({ type: "error", title: error instanceof Error ? error.message : "Action failed" }); }
+    finally { setBusy(false); }
+  }
+
   return (
     <div className="dash-list-row">
       <div className="dash-list-main">
@@ -69,10 +83,13 @@ export function AdminListingRow({
           <span>by {ownerName}</span>
           <span>{viewCount} views</span>
           <span className={`status status-${status.toLowerCase()}`}>{status}</span>
+          {duplicateReview?.flagged && <span className="status status-flagged" title={duplicateReview.reason}>Duplicate-photo review</span>}
+          {duplicateReview?.reason && <span>{duplicateReview.reason}</span>}
         </div>
       </div>
       <div className="dash-list-actions">
         <Link className="btn btn-ghost" href={`/buy/${slug}`}>View</Link>
+        {duplicateReview?.flagged && <button type="button" className="btn btn-ghost" disabled={busy} onClick={resolveDuplicate}>Mark reviewed</button>}
         {flagged ? (
           <button
             type="button"

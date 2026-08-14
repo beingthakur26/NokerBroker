@@ -9,6 +9,7 @@ import {
   Blocks,
   Heart,
   MessagesSquare,
+  Bell,
   Landmark,
   User,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const links = [
   { href: "/dashboard/projects/new", label: "List a project", icon: PlusCircle },
   { href: "/dashboard/favorites", label: "Saved homes", icon: Heart },
   { href: "/dashboard/inquiries", label: "Inquiries", icon: MessagesSquare },
+  { href: "/dashboard/notifications", label: "Notifications", icon: Bell },
   { href: "/dashboard/loans", label: "Loans", icon: Landmark },
   { href: "/dashboard/profile", label: "Profile", icon: User },
 ];

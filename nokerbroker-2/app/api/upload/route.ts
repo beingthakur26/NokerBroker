@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { uploadListingImage } from "@/lib/imagekit";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import crypto from "node:crypto";
+import dbConnect from "@/lib/mongodb";
+import ImageAsset from "@/models/ImageAsset";
 
 export const runtime = "nodejs";
 
@@ -11,6 +15,9 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Sign in to upload images" }, { status: 401 });
+  }
+  if (!(await consumeRateLimit(`upload:${session.user.id}`, 30, 60 * 60_000))) {
+    return NextResponse.json({ error: "Upload limit reached. Please try again later." }, { status: 429 });
   }
 
   const formData = await req.formData().catch(() => null);
@@ -35,7 +42,10 @@ export async function POST(req: Request) {
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const uploaded = await uploadListingImage(buffer, file.name);
-    return NextResponse.json(uploaded);
+    const sha256 = crypto.createHash("sha256").update(buffer).digest("hex");
+    await dbConnect();
+    await ImageAsset.updateOne({ url: uploaded.url }, { $setOnInsert: { ...uploaded, sha256, uploadedBy: session.user.id } }, { upsert: true });
+    return NextResponse.json({ ...uploaded, sha256 });
   } catch {
     return NextResponse.json(
       { error: "Could not upload the image. Please try again." },

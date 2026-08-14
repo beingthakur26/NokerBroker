@@ -10,6 +10,8 @@ import { isValidIndianNumber, normalizeIndianNumber, toMsg91Mobile } from "@/lib
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { isAdminEmail } from "@/lib/admin";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { createNotification } from "@/lib/notifications";
 
 function buildProviders(): Provider[] {
   const providers: Provider[] = [
@@ -23,16 +25,18 @@ function buildProviders(): Provider[] {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
         await dbConnect();
-        const email = String(credentials.email);
+        const email = String(credentials.email).trim().toLowerCase();
         const password = String(credentials.password);
+        if (!(await consumeRateLimit(`signin:${email}`, 10, 15 * 60_000))) return null;
         const user = await User.findOne({ email });
-        if (!user?.passwordHash) return null;
+        if (!user?.passwordHash || !user.emailVerified) return null;
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
         if (isAdminEmail(email) && user.role !== "ADMIN") {
           user.role = "ADMIN";
           await user.save();
         }
+        await createNotification(user._id.toString(), "SECURITY_EVENT", "A password sign-in to your account was successful.", "/dashboard/profile");
         return { id: user._id.toString(), name: user.name, email: user.email, role: user.role ?? "USER" };
       },
     }),
@@ -99,7 +103,6 @@ export const authOptions: NextAuthConfig = {
         if (!user.email) {
           throw new Error("The sign-in provider did not return an email address.");
         }
-
         await dbConnect();
         let dbUser = await User.findOne({ email: user.email });
 

@@ -20,6 +20,9 @@ export interface PropertyView {
   ownerId: string;
   ownerName: string;
   ownerWhatsapp: string;
+  latitude?: number;
+  longitude?: number;
+  duplicateReview?: { flagged: boolean; reason?: string };
 }
 
 export function formatPrice(value: number): string {

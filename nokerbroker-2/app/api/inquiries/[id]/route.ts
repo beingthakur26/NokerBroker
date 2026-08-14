@@ -5,6 +5,7 @@ import dbConnect from "@/lib/mongodb";
 import Inquiry from "@/models/Inquiry";
 import Property from "@/models/Property";
 import Project from "@/models/Project";
+import { createNotification } from "@/lib/notifications";
 
 const STATUSES = ["OPEN", "RESPONDED", "CLOSED"];
 
@@ -51,7 +52,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Only the listing owner, builder, or an administrator can update an inquiry" }, { status: 403 });
   }
 
+  const previousStatus = inquiry.status;
   inquiry.status = status;
   await inquiry.save();
+  if (status === "CLOSED" && previousStatus !== "CLOSED" && String(inquiry.senderId) !== session.user.id) {
+    await createNotification(String(inquiry.senderId), "INQUIRY_CLOSED", "An owner closed your inquiry.", "/dashboard/inquiries/sent");
+  }
   return NextResponse.json({ ok: true, status });
 }

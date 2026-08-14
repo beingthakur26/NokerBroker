@@ -5,6 +5,7 @@ import { PropertyCard } from "@/components/property-card";
 import { BuyFilters } from "@/components/buy-filters";
 import { filterProperties, type PropertyFilters } from "@/lib/properties";
 import { getLiveProperties } from "@/lib/properties-db";
+import { PropertyMap } from "@/components/property-map";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -67,6 +68,7 @@ export default async function BuyPage({
         </div>
 
         <BuyFilters locality={locality} budget={budget} bhk={bhk} sort={sort} />
+        <PropertyMap properties={filtered} token={process.env.NEXT_PUBLIC_MAPBOX_TOKEN} />
 
         <Suspense fallback={<GridSkeleton />}>
           <div className="buy-meta">

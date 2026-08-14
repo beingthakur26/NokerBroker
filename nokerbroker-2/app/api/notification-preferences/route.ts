@@ -9,6 +9,7 @@ export async function PATCH(request: Request) {
   const body = await request.json().catch(() => null);
   const inApp = body?.inApp !== false;
   const email = body?.email !== false;
+  if (!inApp && !email) return NextResponse.json({ error: "Choose at least one notification delivery method" }, { status: 422 });
   await dbConnect();
   await User.findByIdAndUpdate(session.user.id, { notificationPreferences: { inApp, email } });
   return NextResponse.json({ ok: true, preferences: { inApp, email } });

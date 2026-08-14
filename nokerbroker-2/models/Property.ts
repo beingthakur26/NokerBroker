@@ -91,6 +91,19 @@ const PropertySchema = new Schema(
       default: [],
     },
 
+    imageHashes: { type: [String], default: [] },
+    duplicateReview: {
+      flagged: { type: Boolean, default: false },
+      reason: { type: String },
+      matchedPropertyIds: { type: [Schema.Types.ObjectId], ref: "Property", default: [] },
+      reviewedAt: { type: Date },
+      reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    },
+    location: {
+      latitude: { type: Number },
+      longitude: { type: Number },
+    },
+
     ownerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -107,5 +120,8 @@ const PropertySchema = new Schema(
     timestamps: true,
   }
 );
+
+PropertySchema.index({ imageHashes: 1 });
+PropertySchema.index({ "duplicateReview.flagged": 1, createdAt: -1 });
 
 export default models.Property || model("Property", PropertySchema);

@@ -24,7 +24,12 @@ export function isRateLimited(key: string, limit: number, windowMs: number) {
 export async function consumeRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return !isRateLimited(key, limit, windowMs);
+  const development = process.env.NODE_ENV !== "production";
+  if (!url || !token) {
+    if (development) return !isRateLimited(key, limit, windowMs);
+    console.error("[rate-limit] Upstash Redis must be configured in production.");
+    return false;
+  }
   try {
     const redisKey = `nokerbroker:rate:${key}`;
     const increment = await fetch(`${url}/incr/${encodeURIComponent(redisKey)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
@@ -32,7 +37,7 @@ export async function consumeRateLimit(key: string, limit: number, windowMs: num
     if (count === 1) await fetch(`${url}/pexpire/${encodeURIComponent(redisKey)}/${windowMs}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
     return count <= limit;
   } catch (error) {
-    console.error("[rate-limit] Upstash unavailable; using local fallback", error);
-    return !isRateLimited(key, limit, windowMs);
+    console.error("[rate-limit] Upstash unavailable", error);
+    return development ? !isRateLimited(key, limit, windowMs) : false;
   }
 }
