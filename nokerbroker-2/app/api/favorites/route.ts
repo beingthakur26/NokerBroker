@@ -12,10 +12,10 @@ async function resolveTarget(
 ): Promise<{ propertyId?: string; projectId?: string } | null> {
   await dbConnect();
   if (kind === "project") {
-    const project = await Project.findOne({ slug }, "_id").lean();
+    const project = await Project.findOne({ slug, status: "LIVE" }, "_id").lean();
     return project ? { projectId: String(project._id) } : null;
   }
-  const property = await Property.findOne({ slug }, "_id").lean();
+  const property = await Property.findOne({ slug, status: "ACTIVE" }, "_id").lean();
   return property ? { propertyId: String(property._id) } : null;
 }
 

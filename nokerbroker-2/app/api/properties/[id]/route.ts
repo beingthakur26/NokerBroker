@@ -40,9 +40,20 @@ export async function PATCH(
     if (body[key] !== undefined) allowed[key] = body[key];
   }
 
-  const statuses = ["ACTIVE", "SOLD", "RENTED", "DRAFT", "ARCHIVED", "FLAGGED"];
-  if (body.status && statuses.includes(String(body.status))) {
-    allowed.status = String(body.status);
+  const status = String(body.status ?? "").toUpperCase();
+  const adminStatuses = ["ACTIVE", "SOLD", "RENTED", "DRAFT", "ARCHIVED", "FLAGGED"];
+  const ownerStatuses = ["ACTIVE", "SOLD", "RENTED", "DRAFT", "ARCHIVED"];
+  if (status) {
+    if (!admin && (!ownerStatuses.includes(status) || property.status === "FLAGGED")) {
+      return NextResponse.json(
+        { error: "Only an administrator can restore or change a flagged listing" },
+        { status: 403 }
+      );
+    }
+    if (!(admin ? adminStatuses : ownerStatuses).includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 422 });
+    }
+    allowed.status = status;
   }
 
   if (Object.keys(allowed).length === 0) {

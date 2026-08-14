@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import Project from "@/models/Project";
 import BuilderProfile from "@/models/BuilderProfile";
+import User from "@/models/User";
 import { toProjectView } from "@/lib/serialize";
 import { slugify } from "@/lib/slugify";
 import { projectCreateSchema } from "@/lib/validation/listing";
@@ -46,6 +47,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid construction status" }, { status: 422 });
   }
   await dbConnect();
+  const user = await User.findById(session.user.id, "whatsappVerified").lean();
+  if (!user?.whatsappVerified) {
+    return NextResponse.json(
+      { error: "Verify your WhatsApp number before publishing a project" },
+      { status: 403 }
+    );
+  }
   const builderProfile = await BuilderProfile.findOne({ userId: session.user.id }).lean();
   if (!builderProfile || builderProfile.status !== "VERIFIED") {
     return NextResponse.json({ error: "Your builder verification must be approved by an admin before you can list a project" }, { status: 403 });

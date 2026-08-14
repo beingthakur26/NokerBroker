@@ -7,15 +7,32 @@ import {
 } from "@/lib/phone";
 
 const COOLDOWN_MS = 30_000;
+const MAX_SENDS_PER_WINDOW = 3;
+const RATE_LIMIT_WINDOW_MS = 10 * 60_000;
 
 const globalWithOtp = globalThis as typeof globalThis & {
-  otpLastSent?: Record<string, number>;
+  otpSendHistory?: Map<string, number[]>;
 };
 
-function cooldownRemaining(phone: string): number {
-  const lastSent = globalWithOtp.otpLastSent ?? {};
-  const elapsed = Date.now() - (lastSent[phone] ?? 0);
-  return Math.max(0, COOLDOWN_MS - elapsed);
+function remainingLimit(key: string): number {
+  const now = Date.now();
+  const history = globalWithOtp.otpSendHistory ?? new Map<string, number[]>();
+  globalWithOtp.otpSendHistory = history;
+  const sends = (history.get(key) ?? []).filter((sentAt) => now - sentAt < RATE_LIMIT_WINDOW_MS);
+  history.set(key, sends);
+  const lastSent = sends.at(-1);
+  if (lastSent && now - lastSent < COOLDOWN_MS) return COOLDOWN_MS - (now - lastSent);
+  return sends.length >= MAX_SENDS_PER_WINDOW ? RATE_LIMIT_WINDOW_MS - (now - sends[0]) : 0;
+}
+
+function recordSend(...keys: string[]) {
+  const now = Date.now();
+  const history = globalWithOtp.otpSendHistory ?? new Map<string, number[]>();
+  globalWithOtp.otpSendHistory = history;
+  for (const key of keys) {
+    const sends = (history.get(key) ?? []).filter((sentAt) => now - sentAt < RATE_LIMIT_WINDOW_MS);
+    history.set(key, [...sends, now]);
+  }
 }
 
 export async function POST(req: Request) {
@@ -38,20 +55,19 @@ export async function POST(req: Request) {
   }
 
   const normalized = normalizeIndianNumber(whatsappNumber);
-  const remaining = cooldownRemaining(normalized);
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  const clientIp = forwardedFor?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+  const remaining = Math.max(remainingLimit(`phone:${normalized}`), remainingLimit(`ip:${clientIp}`));
   if (remaining > 0) {
     return NextResponse.json(
-      { error: `Please wait ${Math.ceil(remaining / 1000)}s before requesting another code.` },
+      { error: `Too many codes requested. Please wait ${Math.ceil(remaining / 1000)}s before trying again.` },
       { status: 429 }
     );
   }
 
   try {
     await sendWhatsappOtp(toMsg91Mobile(normalized));
-    globalWithOtp.otpLastSent = {
-      ...(globalWithOtp.otpLastSent ?? {}),
-      [normalized]: Date.now(),
-    };
+    recordSend(`phone:${normalized}`, `ip:${clientIp}`);
     return NextResponse.json({ ok: true, resendIn: COOLDOWN_MS / 1000 });
   } catch {
     return NextResponse.json(

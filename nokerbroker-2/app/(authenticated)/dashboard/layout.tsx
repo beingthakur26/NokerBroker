@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { DashboardNav } from "@/components/dashboard-nav";
 
+// Dashboard content is user-specific and reads live MongoDB data.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: Readonly<{

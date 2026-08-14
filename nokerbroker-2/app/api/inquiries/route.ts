@@ -58,11 +58,11 @@ export async function POST(request: Request) {
   let propertyId: string | undefined;
   let projectId: string | undefined;
   if (propertySlug) {
-    const property = await Property.findOne({ slug: propertySlug }, "_id").lean();
+    const property = await Property.findOne({ slug: propertySlug, status: "ACTIVE" }, "_id").lean();
     if (!property) return NextResponse.json({ error: "Property not found" }, { status: 404 });
     propertyId = String(property._id);
   } else {
-    const project = await Project.findOne({ slug: projectSlug }, "_id").lean();
+    const project = await Project.findOne({ slug: projectSlug, status: "LIVE" }, "_id").lean();
     if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
     projectId = String(project._id);
   }

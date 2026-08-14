@@ -1,6 +1,9 @@
 import { requireAdmin } from "@/lib/admin";
 import { AdminNav } from "@/components/admin-nav";
 
+// Admin pages read live MongoDB data and must not be generated at build time.
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children,
 }: Readonly<{

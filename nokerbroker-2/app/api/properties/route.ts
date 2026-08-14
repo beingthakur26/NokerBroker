@@ -18,9 +18,9 @@ export async function GET(request: Request) {
   const budget = url.searchParams.get("budget") ?? "";
   const bhk = url.searchParams.get("bhk") ?? "";
   const type = url.searchParams.get("type") ?? "";
-  const status = url.searchParams.get("status") ?? "ACTIVE";
-
-  const query: Record<string, unknown> = { status };
+  // This is a public endpoint. Never allow a query parameter to expose
+  // draft, sold, archived, or moderator-flagged listings.
+  const query: Record<string, unknown> = { status: "ACTIVE" };
   if (locality) query.locality = new RegExp(locality, "i");
   if (type && TYPES.includes(type)) query.type = type;
 

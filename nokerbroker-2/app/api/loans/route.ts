@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import LoanApplication from "@/models/LoanApplication";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET() {
   const session = await auth();
@@ -21,25 +22,37 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { loanAmount, tenureYears, interestRate, monthlyIncome, employmentType, panNumber, propertyId, documents } = await req.json();
+  const body = await req.json().catch(() => null);
+  const loanAmount = Number(body?.loanAmount);
+  const tenureYears = Number(body?.tenureYears);
+  const interestRate = body?.interestRate == null ? 8.5 : Number(body.interestRate);
+  const monthlyIncome = Number(body?.monthlyIncome);
+  const existingLoans = body?.existingLoans == null ? 0 : Number(body.existingLoans);
+  const employmentType = String(body?.employmentType ?? "").toUpperCase();
+  const panNumber = String(body?.panNumber ?? "").trim().toUpperCase();
+  const propertyId = typeof body?.propertyId === "string" ? body.propertyId : undefined;
+  const documents = Array.isArray(body?.documents) ? body.documents.filter((url: unknown): url is string => typeof url === "string" && /^https:\/\//.test(url)).slice(0, 10) : [];
 
-  if (!loanAmount || !tenureYears || !monthlyIncome || !panNumber) {
-    return NextResponse.json({ error: "Missing required fields for loan application" }, { status: 400 });
+  if (!Number.isFinite(loanAmount) || loanAmount <= 0 || !Number.isInteger(tenureYears) || tenureYears < 1 || tenureYears > 30 || !Number.isFinite(interestRate) || interestRate < 1 || interestRate > 30 || !Number.isFinite(monthlyIncome) || monthlyIncome <= 0 || !Number.isFinite(existingLoans) || existingLoans < 0 || !["SALARIED", "SELF_EMPLOYED", "OTHER"].includes(employmentType) || !/^[A-Z]{5}\d{4}[A-Z]$/.test(panNumber)) {
+    return NextResponse.json({ error: "Enter valid loan, income, employment, and PAN details" }, { status: 422 });
   }
 
   await dbConnect();
   const loan = await LoanApplication.create({
     userId: session.user.id,
     propertyId,
-    loanAmount: Number(loanAmount),
-    tenureYears: Number(tenureYears),
-    interestRate: interestRate ? Number(interestRate) : 8.5,
-    monthlyIncome: Number(monthlyIncome),
-    employmentType: employmentType || "Salaried",
+    loanAmount,
+    tenureYears,
+    interestRate,
+    monthlyIncome,
+    employmentType,
+    existingLoans,
     panNumber,
     documents: documents || [],
     status: "SUBMITTED",
   });
+
+  await createNotification(session.user.id, "LOAN_STATUS", "Your loan application has been submitted for review.");
 
   return NextResponse.json({ ok: true, loan });
 }
