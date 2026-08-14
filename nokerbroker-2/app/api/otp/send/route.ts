@@ -5,6 +5,7 @@ import {
   normalizeIndianNumber,
   toMsg91Mobile,
 } from "@/lib/phone";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 const COOLDOWN_MS = 30_000;
 const MAX_SENDS_PER_WINDOW = 3;
@@ -77,6 +78,13 @@ export async function POST(req: Request) {
       { error: `Too many codes requested. Please wait ${Math.ceil(remaining / 1000)}s before trying again.` },
       { status: 429 }
     );
+  }
+  const sharedAllowed = await Promise.all([
+    consumeRateLimit(`otp-phone:${normalized}`, MAX_SENDS_PER_WINDOW, RATE_LIMIT_WINDOW_MS),
+    consumeRateLimit(`otp-ip:${clientIp}`, 10, RATE_LIMIT_WINDOW_MS),
+  ]);
+  if (sharedAllowed.some((allowed) => !allowed)) {
+    return NextResponse.json({ error: "Too many codes requested. Please try again later." }, { status: 429 });
   }
 
   try {

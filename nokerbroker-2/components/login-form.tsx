@@ -158,6 +158,7 @@ export function LoginForm({ hasGoogle }: { hasGoogle: boolean }) {
           >
             {loading ? "Signing in…" : "Sign in"}
           </button>
+          <Link className="link-more" style={{ marginTop: 12, display: "block" }} href="/forgot-password">Forgot password?</Link>
           <button
             className="link-more"
             style={{ marginTop: 16, display: "block" }}

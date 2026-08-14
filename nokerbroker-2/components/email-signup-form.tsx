@@ -1,0 +1,9 @@
+"use client";
+import Link from "next/link";
+import { FormEvent, useState } from "react";
+
+export function EmailSignupForm() {
+  const [name, setName] = useState(""); const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [message, setMessage] = useState(""); const [loading, setLoading] = useState(false);
+  async function submit(event: FormEvent) { event.preventDefault(); setLoading(true); setMessage(""); const response = await fetch("/api/account/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, email, password }) }); const data = await response.json(); setMessage(data.error ?? data.message); setLoading(false); }
+  return <div className="receipt" style={{ padding: 32 }}><p className="eyebrow">Email sign up</p><h1 style={{ fontFamily: "var(--font-display)", fontSize: 38 }}>Create account with email</h1><form onSubmit={submit} className="space-y-3"><input className="w-full rounded-xl border border-border p-3" placeholder="Full name" value={name} onChange={(event) => setName(event.target.value)} required /><input className="w-full rounded-xl border border-border p-3" type="email" placeholder="Email address" value={email} onChange={(event) => setEmail(event.target.value)} required /><input className="w-full rounded-xl border border-border p-3" type="password" minLength={10} placeholder="Password (10+ characters)" value={password} onChange={(event) => setPassword(event.target.value)} required /><button className="btn btn-primary" type="submit" disabled={loading}>{loading ? "Creating…" : "Create account"}</button></form>{message && <p className="mt-3 text-sm text-ink-soft">{message}</p>}<p className="mt-5 text-sm">Prefer WhatsApp? <Link className="link-more" href="/signup">Sign up with WhatsApp</Link></p></div>;
+}

@@ -147,6 +147,9 @@ export function SignupForm({ hasGoogle }: { hasGoogle: boolean }) {
       <p style={{ marginTop: 20, fontSize: 13, color: "var(--ink-soft)" }}>
         Already have an account? <Link className="link-more" href="/login">Sign in</Link>
       </p>
+      <p style={{ marginTop: 8, fontSize: 13, color: "var(--ink-soft)" }}>
+        Prefer email and password? <Link className="link-more" href="/signup/email">Sign up with email</Link>
+      </p>
     </div>
   );
 }

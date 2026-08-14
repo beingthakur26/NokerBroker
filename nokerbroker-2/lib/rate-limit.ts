@@ -19,3 +19,20 @@ export function isRateLimited(key: string, limit: number, windowMs: number) {
   history.set(key, [...timestamps, now]);
   return false;
 }
+
+/** Shared Upstash limiter in production, with the existing process-local limiter as a safe fallback. */
+export async function consumeRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return !isRateLimited(key, limit, windowMs);
+  try {
+    const redisKey = `nokerbroker:rate:${key}`;
+    const increment = await fetch(`${url}/incr/${encodeURIComponent(redisKey)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    const count = Number((await increment.json()).result);
+    if (count === 1) await fetch(`${url}/pexpire/${encodeURIComponent(redisKey)}/${windowMs}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    return count <= limit;
+  } catch (error) {
+    console.error("[rate-limit] Upstash unavailable; using local fallback", error);
+    return !isRateLimited(key, limit, windowMs);
+  }
+}
