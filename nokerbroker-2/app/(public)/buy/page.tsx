@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { PropertyCard } from "@/components/property-card";
 import { BuyFilters } from "@/components/buy-filters";
 import { filterProperties, type PropertyFilters } from "@/lib/properties";
 import { getLiveProperties } from "@/lib/properties-db";
-import { PropertyMap } from "@/components/property-map";
+import { PropertySearchResults } from "@/components/property-search-results";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -68,8 +67,6 @@ export default async function BuyPage({
         </div>
 
         <BuyFilters locality={locality} budget={budget} bhk={bhk} sort={sort} />
-        <PropertyMap properties={filtered} token={process.env.NEXT_PUBLIC_MAPBOX_TOKEN} />
-
         <Suspense fallback={<GridSkeleton />}>
           <div className="buy-meta">
             <span>
@@ -82,18 +79,7 @@ export default async function BuyPage({
             )}
           </div>
 
-          {filtered.length ? (
-            <div className="prop-grid">
-              {filtered.map((property, index) => (
-                <PropertyCard
-                  key={property.slug}
-                  property={property}
-                  detailsHref={`/buy/${property.slug}`}
-                  imagePriority={index < 3}
-                />
-              ))}
-            </div>
-          ) : (
+          {filtered.length ? <PropertySearchResults properties={filtered} token={process.env.NEXT_PUBLIC_MAPBOX_TOKEN} /> : (
             <div className="empty-state">
               <h2>No matching listings</h2>
               <p>Try a broader locality, budget or BHK — new verified homes are added every day.</p>

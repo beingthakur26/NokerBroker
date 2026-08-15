@@ -24,11 +24,23 @@ export async function GET(request: Request) {
   const budget = url.searchParams.get("budget") ?? "";
   const bhk = url.searchParams.get("bhk") ?? "";
   const type = url.searchParams.get("type") ?? "";
+  const west = Number(url.searchParams.get("west"));
+  const south = Number(url.searchParams.get("south"));
+  const east = Number(url.searchParams.get("east"));
+  const north = Number(url.searchParams.get("north"));
+  const longitude = Number(url.searchParams.get("longitude"));
+  const latitude = Number(url.searchParams.get("latitude"));
+  const radiusKm = Number(url.searchParams.get("radiusKm"));
   // This is a public endpoint. Never allow a query parameter to expose
   // draft, sold, archived, or moderator-flagged listings.
   const query: Record<string, unknown> = { status: "ACTIVE" };
   if (locality) query.locality = new RegExp(escapeRegex(locality), "i");
   if (type && TYPES.includes(type)) query.type = type;
+  if ([west, south, east, north].every(Number.isFinite) && west < east && south < north) {
+    query.geo = { $geoWithin: { $box: [[west, south], [east, north]] } };
+  } else if ([longitude, latitude, radiusKm].every(Number.isFinite) && radiusKm > 0 && radiusKm <= 100) {
+    query.geo = { $near: { $geometry: { type: "Point", coordinates: [longitude, latitude] }, $maxDistance: radiusKm * 1000 } };
+  }
 
   const docs = await Property.find(query)
     .populate("ownerId", "name whatsappNumber whatsappVerified")
@@ -113,7 +125,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "You can publish up to five listings per hour. Please try again later." }, { status: 429 });
   }
 
-  const imageAssets = images.length ? await ImageAsset.find({ url: { $in: images } }, "sha256").lean() : [];
+  const imageAssets = images.length ? await ImageAsset.find({ url: { $in: images }, uploadedBy: session.user.id }, "url sha256").lean() : [];
+  if (imageAssets.length !== images.length) {
+    return NextResponse.json({ error: "Listing images must be your uploaded ImageAsset records" }, { status: 422 });
+  }
   const imageHashes = [...new Set(imageAssets.map((asset) => asset.sha256))];
   const duplicateCandidates = imageHashes.length
     ? await Property.find({ imageHashes: { $in: imageHashes } }, "_id title").limit(10).lean()
@@ -144,6 +159,7 @@ export async function POST(request: Request) {
     imageHashes,
     duplicateReview,
     location: coordinates ? { latitude: coordinates.latitude, longitude: coordinates.longitude } : undefined,
+    geo: coordinates ? { type: "Point", coordinates: [coordinates.longitude, coordinates.latitude] } : undefined,
     amenities,
     status: "ACTIVE",
     viewCount: 0,

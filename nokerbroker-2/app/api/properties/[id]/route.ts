@@ -5,6 +5,8 @@ import dbConnect from "@/lib/mongodb";
 import Property from "@/models/Property";
 import { toPropertyView } from "@/lib/serialize";
 import { propertyCreateSchema } from "@/lib/validation/listing";
+import ImageAsset from "@/models/ImageAsset";
+import { createNotification } from "@/lib/notifications";
 
 export async function PATCH(
   request: Request,
@@ -39,6 +41,7 @@ export async function PATCH(
     if (!admin) return NextResponse.json({ error: "Only an administrator can resolve a duplicate review" }, { status: 403 });
     property.set({ "duplicateReview.flagged": false, "duplicateReview.reviewedAt": new Date(), "duplicateReview.reviewedBy": session.user.id });
     await property.save();
+    await createNotification(String(property.ownerId), "DUPLICATE_REVIEW", `The duplicate-photo review for ${property.title} was resolved.`, `/dashboard/listings/${id}/edit`);
     return NextResponse.json({ property: toPropertyView((await Property.findById(id).populate("ownerId", "name whatsappNumber whatsappVerified").lean())!) });
   }
 
@@ -72,6 +75,13 @@ export async function PATCH(
   }
   Object.assign(allowed, validation.data);
 
+  if (allowed.images) {
+    const images = allowed.images as string[];
+    const assets = await ImageAsset.find({ url: { $in: images }, uploadedBy: session.user.id }, "url sha256").lean();
+    if (assets.length !== images.length) return NextResponse.json({ error: "Listing images must be your uploaded ImageAsset records" }, { status: 422 });
+    allowed.imageHashes = [...new Set(assets.map((asset) => asset.sha256))];
+  }
+
   const status = String(body.status ?? "").toUpperCase();
   const adminStatuses = ["ACTIVE", "SOLD", "RENTED", "DRAFT", "ARCHIVED", "FLAGGED"];
   const ownerStatuses = ["ACTIVE", "SOLD", "RENTED", "DRAFT", "ARCHIVED"];
@@ -86,6 +96,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid status" }, { status: 422 });
     }
     allowed.status = status;
+    if (admin && status !== property.status) {
+      const action = status === "FLAGGED" ? "flagged" : property.status === "FLAGGED" ? "restored" : "updated";
+      await createNotification(String(property.ownerId), "DUPLICATE_REVIEW", `An administrator ${action} your listing, ${property.title}.`, `/dashboard/listings/${id}/edit`);
+    }
   }
 
   if (Object.keys(allowed).length === 0) {

@@ -13,6 +13,7 @@ const NotificationSchema = new Schema(
         "INQUIRY_CLOSED",
         "LOAN_STATUS",
         "SAVED_SEARCH_MATCH",
+        "DUPLICATE_REVIEW",
         "BOOKING_UPDATE",
         "SECURITY_EVENT",
       ],

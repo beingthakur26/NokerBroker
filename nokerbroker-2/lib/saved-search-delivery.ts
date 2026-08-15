@@ -17,10 +17,17 @@ export async function deliverSavedSearchMatches(listings?: Listing[]) {
     const previouslyDelivered = new Set(search.deliveredListingIds ?? []);
     const matches = activeListings.filter((listing) => !previouslyDelivered.has(String(listing._id)) && matchesSavedSearch(filters, listing));
     for (const listing of matches) {
+      // Claim the listing before sending. The condition makes concurrent publish
+      // and cron runs idempotent, including when a user has email-only alerts.
+      const claimed = await SavedSearch.findOneAndUpdate(
+        { _id: search._id, deliveredListingIds: { $ne: String(listing._id) } },
+        { $addToSet: { deliveredListingIds: String(listing._id) }, $set: { lastDeliveredAt: new Date() } },
+        { new: true }
+      ).lean();
+      if (!claimed) continue;
       await createNotification(String(search.userId), "SAVED_SEARCH_MATCH", `A new listing matches ${search.title}: ${listing.title}.`, `/buy/${listing.slug}`);
       delivered += 1;
     }
-    if (matches.length) await SavedSearch.updateOne({ _id: search._id }, { $addToSet: { deliveredListingIds: { $each: matches.map((match) => String(match._id)) } }, $set: { lastDeliveredAt: new Date() } });
   }
   return delivered;
 }

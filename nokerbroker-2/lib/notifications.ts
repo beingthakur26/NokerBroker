@@ -2,7 +2,7 @@ import Notification from "@/models/Notification";
 import User from "@/models/User";
 import { sendNotificationEmail } from "@/lib/email";
 
-export type NotificationType = "LISTING_LIVE" | "NEW_INQUIRY" | "INQUIRY_REPLY" | "INQUIRY_CLOSED" | "LOAN_STATUS" | "SAVED_SEARCH_MATCH" | "SECURITY_EVENT";
+export type NotificationType = "LISTING_LIVE" | "NEW_INQUIRY" | "INQUIRY_REPLY" | "INQUIRY_CLOSED" | "LOAN_STATUS" | "SAVED_SEARCH_MATCH" | "DUPLICATE_REVIEW" | "SECURITY_EVENT";
 
 export async function createNotification(
   userId: string,
@@ -35,6 +35,7 @@ function notificationSubject(type: NotificationType) {
     INQUIRY_CLOSED: "An inquiry was closed",
     LOAN_STATUS: "Your loan application was updated",
     SAVED_SEARCH_MATCH: "A listing matches your saved search",
+    DUPLICATE_REVIEW: "Listing review update",
     SECURITY_EVENT: "Security update for your NokerBroker account",
   };
   return labels[type];

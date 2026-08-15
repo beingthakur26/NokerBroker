@@ -41,6 +41,7 @@ interface PropertyDocRecord {
   status: string;
   images?: string[];
   location?: { latitude?: number; longitude?: number };
+  geo?: { type?: string; coordinates?: number[] };
   duplicateReview?: { flagged?: boolean; reason?: string };
   ownerId: OwnerRef;
 }
@@ -70,8 +71,8 @@ export function toPropertyView(doc: PropertyDocRecord): PropertyView {
     ownerId: owner.ownerId,
     ownerName: owner.name,
     ownerWhatsapp: owner.whatsapp,
-    latitude: doc.location?.latitude,
-    longitude: doc.location?.longitude,
+    latitude: doc.geo?.coordinates?.[1] ?? doc.location?.latitude,
+    longitude: doc.geo?.coordinates?.[0] ?? doc.location?.longitude,
     duplicateReview: doc.duplicateReview ? { flagged: doc.duplicateReview.flagged === true, reason: doc.duplicateReview.reason } : undefined,
   };
 }

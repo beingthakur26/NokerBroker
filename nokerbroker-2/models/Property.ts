@@ -103,6 +103,12 @@ const PropertySchema = new Schema(
       latitude: { type: Number },
       longitude: { type: Number },
     },
+    // GeoJSON is the canonical search location. `location` remains while older
+    // documents are gradually re-geocoded, so existing listings stay visible.
+    geo: {
+      type: { type: String, enum: ["Point"] },
+      coordinates: { type: [Number] },
+    },
 
     ownerId: {
       type: Schema.Types.ObjectId,
@@ -123,5 +129,6 @@ const PropertySchema = new Schema(
 
 PropertySchema.index({ imageHashes: 1 });
 PropertySchema.index({ "duplicateReview.flagged": 1, createdAt: -1 });
+PropertySchema.index({ geo: "2dsphere" });
 
 export default models.Property || model("Property", PropertySchema);
