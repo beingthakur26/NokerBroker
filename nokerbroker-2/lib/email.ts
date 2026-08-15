@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
 function appUrl() {
-  return (process.env.AUTH_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  return (process.env.AUTH_URL ?? "http://localhost:3001").replace(/\/$/, "");
 }
 
 async function send(to: string, subject: string, html: string) {
